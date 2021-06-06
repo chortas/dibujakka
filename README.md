@@ -1,8 +1,8 @@
-# dibujakka
+# dibujakka  
 
----
 Teoría del Lenguaje - FIUBA  
 Pictionary server written in Scala with akka toolkit.
+
 ---
 
 ### Running the project
