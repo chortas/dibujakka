@@ -56,7 +56,7 @@ object GreeterMain {
 
       Behaviors.receiveMessage { message =>
         //#create-actors
-        val replyTo = context.spawn(GreeterBot(max = 3), message.name)
+        val replyTo = context.spawn(GreeterBot(max = 5), message.name)
         //#create-actors
         greeter ! Greeter.Greet(message.name, replyTo)
         Behaviors.same
@@ -73,7 +73,10 @@ object AkkaQuickstart extends App {
   //#actor-system
 
   //#main-send-messages
-  greeterMain ! SayHello("Juampi-Robin-Ari")
+  greeterMain ! SayHello("Ceci")
+  greeterMain ! SayHello("Robin")
+  greeterMain ! SayHello("Ari")
+  greeterMain ! SayHello("Juampi")
   //#main-send-messages
 }
 //#main-class
