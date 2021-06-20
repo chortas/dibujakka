@@ -1,54 +1,66 @@
 package dibujakka
 
-import akka.actor.typed.Behavior
-import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
-import dibujakka.Room.{AddPlayer, AddRound, CreateRoom, Message, StartRoom}
-
-object Room {
-  sealed trait Message
-  case class CreateRoom(id: Int,
-                        name: String,
-                        totalRounds: Int,
-                        maxPlayers: Int,
-                        language: String)
-      extends Message
-  case class AddRound() extends Message
-  case class AddPlayer() extends Message
-  case class StartRoom() extends Message
-
-  def apply(): Behavior[Message] =
-    Behaviors.setup(context => new Room(context))
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import spray.json.{
+  DefaultJsonProtocol,
+  JsArray,
+  JsNumber,
+  JsString,
+  JsValue,
+  RootJsonFormat
 }
 
-class Room(context: ActorContext[Message])
-    extends AbstractBehavior[Message](context) {
+class Room(var id: Int,
+           var name: String,
+           var totalRounds: Int,
+           var maxPlayers: Int,
+           var language: String,
+           var currentRound: Int,
+           var playersCount: Int,
+           var status: String) {
 
-  private var _currentRound = 0
-  private var _playersCount = 0
-  private var _status = "waiting"
-  private var _id = 0
-  private var _name = ""
-  private var _totalRounds = 0
-  private var _maxPlayers = 0
-  private var _language = ""
+  def addRound() = currentRound += 1
+  def addPlayer() = playersCount += 1
+  def start() = status = "In progress"
+}
 
-  override def onMessage(msg: Message) =
-    msg match {
-      case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
-        _id = id
-        _name = name
-        _totalRounds = totalRounds
-        _maxPlayers = maxPlayers
-        _language = language
-        Behaviors.same
-      case AddRound() =>
-        _currentRound += 1
-        Behaviors.same
-      case AddPlayer() =>
-        _playersCount += 1
-        Behaviors.same
-      case StartRoom() =>
-        _status = "In progress"
-        Behaviors.same
+object RoomProtocol extends DefaultJsonProtocol with SprayJsonSupport {
+  implicit object RoomJsonFormat extends RootJsonFormat[Room] {
+    def write(r: Room) =
+      JsArray(
+        JsNumber(r.id),
+        JsString(r.name),
+        JsNumber(r.totalRounds),
+        JsNumber(r.maxPlayers),
+        JsString(r.language),
+        JsNumber(r.currentRound),
+        JsNumber(r.playersCount),
+        JsString(r.status)
+      )
+
+    def read(value: JsValue) = value match {
+      case JsArray(
+          Vector(
+            JsNumber(id),
+            JsString(name),
+            JsNumber(totalRounds),
+            JsNumber(maxPlayers),
+            JsString(language),
+            JsNumber(currentRound),
+            JsNumber(playersCount),
+            JsString(status)
+          )
+          ) =>
+        new Room(
+          id.intValue,
+          name,
+          totalRounds.intValue,
+          maxPlayers.intValue,
+          language,
+          currentRound.intValue,
+          playersCount.intValue,
+          status
+        )
     }
+  }
 }
