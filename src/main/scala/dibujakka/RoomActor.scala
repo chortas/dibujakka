@@ -24,26 +24,17 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
         apply(
           Some(
-            new Room(
-              id,
-              name,
-              totalRounds,
-              maxPlayers,
-              language,
-              0,
-              0,
-              "waiting"
-            )
+            Room(id, name, totalRounds, maxPlayers, language, 0, 0, "waiting")
           )
         )
       case AddRound() =>
-        room.foreach(room => room.addRound())
+        room.foreach(room => room.copy(currentRound = room.currentRound + 1))
         Behaviors.same
       case AddPlayer() =>
-        room.foreach(room => room.addPlayer())
+        room.foreach(room => room.copy(playersCount = room.playersCount + 1))
         Behaviors.same
       case StartRoom() =>
-        room.foreach(room => room.start())
+        room.foreach(room => room.copy(status = "in progress"))
         Behaviors.same
     }
 }
