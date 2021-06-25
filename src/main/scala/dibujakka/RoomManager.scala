@@ -1,13 +1,13 @@
 package dibujakka
 
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.actor.typed.scaladsl.AskPattern._
+import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.util.Timeout
 import dibujakka.RoomMessages.{CreateRoom, GetRoom, GetRooms, RoomMessage}
-import akka.actor.typed.scaladsl.AskPattern._
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 object RoomManager {
   case class Rooms(rooms: List[Room])
@@ -16,38 +16,42 @@ object RoomManager {
     ActorSystem(RoomActor.apply(), "roomActor")
   implicit val executionContext: ExecutionContext = system.executionContext
 
-  def apply: Behaviors.Receive[RoomMessage] = apply(List.empty)
+  def apply(): Behavior[RoomMessage] =
+    Behaviors.setup(context => new RoomManager(context, List.empty))
 
-  def apply(
-    rooms: List[ActorRef[RoomMessage]]
-  ): Behaviors.Receive[RoomMessage] =
-    Behaviors.receive {
-      case (
-          _,
-          CreateRoom(
-            id: Int,
-            name: String,
-            totalRounds: Int,
-            maxPlayers: Int,
-            language: String
-          )
-          ) =>
-        Behaviors.setup { context =>
-          implicit val timeout: Timeout = 10.seconds
+  def apply(rooms: List[ActorRef[RoomMessage]]): Behavior[RoomMessage] =
+    Behaviors.setup(context => new RoomManager(context, rooms))
+}
 
-          val roomActor = context.spawnAnonymous(RoomActor())
+class RoomManager(context: ActorContext[RoomMessage],
+                  rooms: List[ActorRef[RoomMessage]])
+    extends AbstractBehavior[RoomMessage](context) {
 
-          roomActor ! CreateRoom(id, name, totalRounds, maxPlayers, language)
+  import RoomManager._
 
-          apply(rooms :+ roomActor)
-        }
-      case (_, GetRooms(replyTo)) =>
+  override def onMessage(message: RoomMessage): Behavior[RoomMessage] =
+    message match {
+      // TODO: add functionality for otherMessages
+      case RoomMessages.AddRound()  => Behaviors.same
+      case RoomMessages.AddPlayer() => Behaviors.same
+      case RoomMessages.StartRoom() => Behaviors.same
+      case GetRoom(replyTo)         => Behaviors.same
+      case GetRooms(replyTo) =>
         implicit val timeout: Timeout = 10.seconds
 
-        val mappedRooms =
+        val mappedRooms: List[Future[Room]] =
           rooms.map(roomActor => (roomActor ? GetRoom).mapTo[Room])
 
         Future.sequence(mappedRooms).foreach(rooms => replyTo ! Rooms(rooms))
         Behaviors.same
+      case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
+        implicit val timeout: Timeout = 10.seconds
+
+        val roomActor = context.spawnAnonymous(RoomActor())
+
+        roomActor ! CreateRoom(id, name, totalRounds, maxPlayers, language)
+
+        apply(rooms :+ roomActor)
     }
+
 }
