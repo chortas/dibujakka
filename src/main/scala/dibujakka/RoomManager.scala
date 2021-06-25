@@ -12,10 +12,6 @@ import scala.concurrent.{ExecutionContext, Future}
 object RoomManager {
   case class Rooms(rooms: List[Room])
 
-  implicit val system: ActorSystem[RoomMessage] =
-    ActorSystem(RoomActor.apply(), "roomActor")
-  implicit val executionContext: ExecutionContext = system.executionContext
-
   def apply(): Behavior[RoomMessage] =
     Behaviors.setup(context => new RoomManager(context, List.empty))
 
@@ -26,6 +22,9 @@ object RoomManager {
 class RoomManager(context: ActorContext[RoomMessage],
                   rooms: List[ActorRef[RoomMessage]])
     extends AbstractBehavior[RoomMessage](context) {
+
+  implicit val system: ActorSystem[Nothing] = context.system
+  implicit val executionContext: ExecutionContext = context.executionContext
 
   import RoomManager._
 
