@@ -1,7 +1,8 @@
-package dibujakka
+package dibujakka.room
 
 import akka.actor.typed.ActorRef
-import dibujakka.RoomManager.Rooms
+import dibujakka.communication.{ClientCommand, ServerCommand}
+import dibujakka.room.RoomManager.Rooms
 
 object RoomMessages {
   trait RoomMessage
@@ -21,19 +22,24 @@ object RoomMessages {
                         totalRounds: Int,
                         maxPlayers: Int,
                         language: String)
-    extends RoomMessage
+      extends RoomMessage
 
   case class ClientMessage(roomId: String, command: ClientCommand)
-    extends RoomMessage
+      extends RoomMessage
 
   case class SendToClients(roomId: String, serverCommand: ServerCommand)
-    extends RoomMessage
+      extends RoomMessage
 
-  case class DrawMessage(replyTo: ActorRef[SendToClients], message: String) extends RoomMessage
+  case class DrawMessage(replyTo: ActorRef[SendToClients], message: String)
+      extends RoomMessage
 
-  case class ChatMessage(replyTo: ActorRef[SendToClients], word: String) extends RoomMessage
+  case class ChatMessage(replyTo: ActorRef[SendToClients],
+                         word: String,
+                         userName: String)
+      extends RoomMessage
 
   case class StartMessage(replyTo: ActorRef[SendToClients]) extends RoomMessage
 
-  case class JoinMessage(replyTo: ActorRef[SendToClients], name: String) extends RoomMessage
+  case class JoinMessage(replyTo: ActorRef[SendToClients], name: String)
+      extends RoomMessage
 }

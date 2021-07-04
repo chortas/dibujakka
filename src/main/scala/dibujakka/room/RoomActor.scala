@@ -1,8 +1,13 @@
-package dibujakka
+package dibujakka.room
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
-import dibujakka.RoomMessages._
+import dibujakka.communication.{
+  ChatServerCommand,
+  DrawServerCommand,
+  RoomServerCommand
+}
+import dibujakka.room.RoomMessages._
 
 object RoomActor {
   def apply(): Behavior[RoomMessage] =
@@ -13,7 +18,7 @@ object RoomActor {
 }
 
 class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
-  extends AbstractBehavior[RoomMessage](context) {
+    extends AbstractBehavior[RoomMessage](context) {
 
   import RoomActor._
 
@@ -25,38 +30,46 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
         apply(
           Some(
-            Room(id, name, totalRounds, maxPlayers, language, 0, "waiting", "word", Map.empty)
+            Room(
+              id,
+              name,
+              totalRounds,
+              maxPlayers,
+              language,
+              0,
+              "waiting",
+              "word", //TODO: change this harcoded word
+              Map.empty
+            )
           )
         )
       case AddRound() =>
-        room.foreach(room => room.copy(currentRound = room.currentRound + 1))
-        Behaviors.same
-//      case AddPlayer() =>
-//        room.foreach(room => room.copy(playersCount = room.playersCount + 1))
-//        Behaviors.same
+        val newRoom = room.get.copy(currentRound = room.get.currentRound + 1)
+        apply(Some(newRoom))
       case StartRoom() =>
-        room.foreach(room => room.copy(status = "in progress"))
-        Behaviors.same
+        val newRoom = room.get.copy(status = "in progress")
+        apply(Some(newRoom))
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
         Behaviors.same
-      case ChatMessage(replyTo, word) =>
-        // Must receive the username so if he guessed the word, the score goes up.
+      case ChatMessage(replyTo, word, userName) =>
         val roomId = room.get.id
         val currentWord = room.get.currentWord
         if (word.equalsIgnoreCase(currentWord)) {
-          replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+          val newRoom = room.get.addScore(userName)
+          replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
+          apply(Some(newRoom))
         } else {
           replyTo ! SendToClients(roomId, ChatServerCommand(word))
+          Behaviors.same
         }
-        Behaviors.same
       case StartMessage(replyTo) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
         Behaviors.same
-      case JoinMessage(replyTo, name) =>
-        val newRoom = room.get.addPlayer(name)
+      case JoinMessage(replyTo, userName) =>
+        val newRoom = room.get.addPlayer(userName)
         val roomId = newRoom.id
         replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
         apply(Some(newRoom))
