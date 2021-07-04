@@ -13,7 +13,7 @@ object RoomActor {
 }
 
 class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
-  extends AbstractBehavior[RoomMessage](context) {
+    extends AbstractBehavior[RoomMessage](context) {
 
   import RoomActor._
 
@@ -25,18 +25,25 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
         apply(
           Some(
-            Room(id, name, totalRounds, maxPlayers, language, 0, "waiting", "word", Map.empty)
+            Room(
+              id,
+              name,
+              totalRounds,
+              maxPlayers,
+              language,
+              0,
+              "waiting",
+              "word",
+              Map.empty
+            )
           )
         )
       case AddRound() =>
-        room.foreach(room => room.copy(currentRound = room.currentRound + 1))
-        Behaviors.same
-//      case AddPlayer() =>
-//        room.foreach(room => room.copy(playersCount = room.playersCount + 1))
-//        Behaviors.same
+        val newRoom = room.get.copy(currentRound = room.get.currentRound + 1)
+        apply(Some(newRoom))
       case StartRoom() =>
-        room.foreach(room => room.copy(status = "in progress"))
-        Behaviors.same
+        val newRoom = room.get.copy(status = "in progress")
+        apply(Some(newRoom))
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
