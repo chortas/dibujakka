@@ -11,8 +11,6 @@ object RoomMessages {
 
   case class AddPlayer() extends RoomMessage
 
-  case class StartRoom() extends RoomMessage
-
   case class GetRoom(replyTo: ActorRef[Room]) extends RoomMessage
 
   case class GetRooms(replyTo: ActorRef[Rooms]) extends RoomMessage

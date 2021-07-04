@@ -46,9 +46,6 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case AddRound() =>
         val newRoom = room.get.copy(currentRound = room.get.currentRound + 1)
         apply(Some(newRoom))
-      case StartRoom() =>
-        val newRoom = room.get.copy(status = "in progress")
-        apply(Some(newRoom))
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
@@ -65,9 +62,10 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
           Behaviors.same
         }
       case StartMessage(replyTo) =>
-        val roomId = room.get.id
-        replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
-        Behaviors.same
+        val newRoom = room.get.copy(status = "in progress")
+        val roomId = newRoom.id
+        replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
+        apply(Some(newRoom))
       case JoinMessage(replyTo, userName) =>
         val newRoom = room.get.addPlayer(userName)
         val roomId = newRoom.id
