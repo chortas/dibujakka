@@ -50,5 +50,9 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
           replyTo ! SendToClients(roomId, ChatServerCommand(word))
         }
         Behaviors.same
+      case StartMessage(replyTo) =>
+        val roomId = room.get.id
+        replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+        Behaviors.same
     }
 }
