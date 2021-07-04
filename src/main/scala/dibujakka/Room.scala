@@ -7,4 +7,5 @@ case class Room(id: String,
                 language: String,
                 currentRound: Int,
                 playersCount: Int,
-                status: String)
+                status: String,
+                currentWord: String)

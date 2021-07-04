@@ -22,7 +22,7 @@ object RoomManager {
 
 class RoomManager(context: ActorContext[RoomMessage],
                   rooms: Map[String, ActorRef[RoomMessage]])
-    extends AbstractBehavior[RoomMessage](context) {
+  extends AbstractBehavior[RoomMessage](context) {
 
   implicit val system: ActorSystem[Nothing] = context.system
   implicit val executionContext: ExecutionContext = context.executionContext
@@ -56,7 +56,13 @@ class RoomManager(context: ActorContext[RoomMessage],
               .foreach(roomActor => {
                 roomActor ! DrawMessage(context.self, drawMessage)
               })
-
+            Behaviors.same
+          case ChatClientCommand(word) =>
+            rooms
+              .get(roomId)
+              .foreach(roomActor => {
+                roomActor ! ChatMessage(context.self, word)
+              })
             Behaviors.same
         }
       case SendToClients(roomId, serverCommand) =>

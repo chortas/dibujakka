@@ -13,7 +13,8 @@ object RoomActor {
 }
 
 class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
-    extends AbstractBehavior[RoomMessage](context) {
+  extends AbstractBehavior[RoomMessage](context) {
+
   import RoomActor._
 
   override def onMessage(msg: RoomMessage) =
@@ -24,7 +25,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
         apply(
           Some(
-            Room(id, name, totalRounds, maxPlayers, language, 0, 0, "waiting")
+            Room(id, name, totalRounds, maxPlayers, language, 0, 0, "waiting", "word")
           )
         )
       case AddRound() =>
@@ -39,6 +40,15 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
+        Behaviors.same
+      case ChatMessage(replyTo, word) =>
+        val roomId = room.get.id
+        val currentWord = room.get.currentWord
+        if (word.equalsIgnoreCase(currentWord)) {
+          replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+        } else {
+          replyTo ! SendToClients(roomId, ChatServerCommand(word))
+        }
         Behaviors.same
     }
 }
