@@ -17,7 +17,7 @@ object RoomManager {
       Behaviors.receiveMessage { message =>
         println("Room", message.roomId)
         println("Message", message.msg)
-        sendMessageToClients(message.roomId, s"Response from roomManager: room $message.roomId, $message.msg")
+        sendMessageToClients(message.roomId, s"Response from roomManager: room ${message.roomId}, ${message.msg}")
         Behaviors.same
       }
     }
