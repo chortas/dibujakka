@@ -18,5 +18,3 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion,
 )
-
-libraryDependencies += "net.liftweb" %% "lift-json" % "3.0.1"
