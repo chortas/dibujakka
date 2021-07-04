@@ -1,6 +1,6 @@
 package dibujakka
 
-case class Room(id: Int,
+case class Room(id: String,
                 name: String,
                 totalRounds: Int,
                 maxPlayers: Int,

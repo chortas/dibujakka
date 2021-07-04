@@ -36,5 +36,9 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case StartRoom() =>
         room.foreach(room => room.copy(status = "in progress"))
         Behaviors.same
+      case DrawMessage(replyTo, message) =>
+        val roomId = room.get.id
+        replyTo ! SendToClients(roomId, DrawServerCommand(message))
+        Behaviors.same
     }
 }
