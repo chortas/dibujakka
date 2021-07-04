@@ -1,8 +1,13 @@
-package dibujakka
+package dibujakka.room
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
-import dibujakka.RoomMessages._
+import dibujakka.communication.{
+  ChatServerCommand,
+  DrawServerCommand,
+  RoomServerCommand
+}
+import dibujakka.room.RoomMessages._
 
 object RoomActor {
   def apply(): Behavior[RoomMessage] =

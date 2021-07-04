@@ -11,11 +11,11 @@ import akka.http.scaladsl.server.Directives.{
 import akka.http.scaladsl.server.Route
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source, SourceQueueWithComplete}
-import dibujakka.RoomMessages.ClientMessage
 import dibujakka.Server.system
-import dibujakka.WebSocketChatMessageProtocol._
-import dibujakka.WebSocketMessageProtocol._
-import dibujakka._
+import dibujakka.communication.WebSocketChatMessageProtocol._
+import dibujakka.communication.WebSocketMessageProtocol._
+import dibujakka.communication._
+import dibujakka.room.RoomMessages.ClientMessage
 import spray.json._
 
 trait PlayerService {

@@ -1,6 +1,6 @@
-package dibujakka
+package dibujakka.communication
 
-import dibujakka.RoomMessages.RoomMessage
+import dibujakka.room.RoomMessages.RoomMessage
 
 sealed trait ClientCommand extends RoomMessage
 

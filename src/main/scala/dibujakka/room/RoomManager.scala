@@ -1,11 +1,17 @@
-package dibujakka
+package dibujakka.room
 
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.util.Timeout
-import dibujakka.RoomMessages._
 import dibujakka.Server.sendMessageToClients
+import dibujakka.communication.{
+  ChatClientCommand,
+  DrawClientCommand,
+  JoinClientCommand,
+  StartClientCommand
+}
+import dibujakka.room.RoomMessages._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}

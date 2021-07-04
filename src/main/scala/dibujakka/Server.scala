@@ -3,12 +3,12 @@ package dibujakka
 import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
-import dibujakka.RoomMessages.RoomMessage
+import dibujakka.room.RoomManager
+import dibujakka.room.RoomMessages.RoomMessage
 import dibujakka.services.{PlayerService, RoomService}
 
 import scala.concurrent.ExecutionContext
 import scala.io.StdIn
-
 
 object Server extends PlayerService with RoomService {
   implicit val system: ActorSystem[RoomMessage] =

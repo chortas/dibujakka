@@ -1,7 +1,8 @@
-package dibujakka
+package dibujakka.room
 
 import akka.actor.typed.ActorRef
-import dibujakka.RoomManager.Rooms
+import dibujakka.communication.{ClientCommand, ServerCommand}
+import dibujakka.room.RoomManager.Rooms
 
 object RoomMessages {
   trait RoomMessage

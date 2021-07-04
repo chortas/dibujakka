@@ -1,4 +1,4 @@
-package dibujakka
+package dibujakka.room
 
 import spray.json.{
   DefaultJsonProtocol,
