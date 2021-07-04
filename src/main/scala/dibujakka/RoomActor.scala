@@ -54,5 +54,10 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
         Behaviors.same
+      case JoinMessage(replyTo, name) =>
+        //Must add player to room
+        val roomId = room.get.id
+        replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+        Behaviors.same
     }
 }

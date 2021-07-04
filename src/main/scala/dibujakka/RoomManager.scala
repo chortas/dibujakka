@@ -71,6 +71,13 @@ class RoomManager(context: ActorContext[RoomMessage],
                 roomActor ! StartMessage(context.self)
               })
             Behaviors.same
+          case JoinClientCommand(name) =>
+            rooms
+              .get(roomId)
+              .foreach(roomActor => {
+                roomActor ! JoinMessage(context.self, name)
+              })
+            Behaviors.same
         }
       case SendToClients(roomId, serverCommand) =>
         sendMessageToClients(roomId, serverCommand.toString)

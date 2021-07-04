@@ -8,7 +8,7 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source, SourceQueueWithComplete}
 import dibujakka.RoomMessages.ClientMessage
 import dibujakka.Server.system
-import dibujakka.{ChatClientCommand, DrawClientCommand, StartClientCommand, WebSocketMessage}
+import dibujakka.{ChatClientCommand, DrawClientCommand, JoinClientCommand, StartClientCommand, WebSocketMessage}
 import spray.json.DefaultJsonProtocol.{jsonFormat2, _}
 import spray.json.{RootJsonFormat, _}
 
@@ -49,6 +49,11 @@ trait PlayerService {
             system ! ClientMessage(
               roomId,
               StartClientCommand()
+            )
+          case "join" =>
+            system ! ClientMessage(
+              roomId,
+              JoinClientCommand(webSocketMessage.payload)
             )
         }
         println("TextMessage received in room:", roomId)
