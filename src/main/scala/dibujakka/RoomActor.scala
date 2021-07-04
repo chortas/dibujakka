@@ -25,15 +25,15 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
         apply(
           Some(
-            Room(id, name, totalRounds, maxPlayers, language, 0, 0, "waiting", "word")
+            Room(id, name, totalRounds, maxPlayers, language, 0, "waiting", "word", Map.empty)
           )
         )
       case AddRound() =>
         room.foreach(room => room.copy(currentRound = room.currentRound + 1))
         Behaviors.same
-      case AddPlayer() =>
-        room.foreach(room => room.copy(playersCount = room.playersCount + 1))
-        Behaviors.same
+//      case AddPlayer() =>
+//        room.foreach(room => room.copy(playersCount = room.playersCount + 1))
+//        Behaviors.same
       case StartRoom() =>
         room.foreach(room => room.copy(status = "in progress"))
         Behaviors.same
@@ -42,6 +42,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
         Behaviors.same
       case ChatMessage(replyTo, word) =>
+        // Must receive the username so if he guessed the word, the score goes up.
         val roomId = room.get.id
         val currentWord = room.get.currentWord
         if (word.equalsIgnoreCase(currentWord)) {
@@ -50,5 +51,14 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
           replyTo ! SendToClients(roomId, ChatServerCommand(word))
         }
         Behaviors.same
+      case StartMessage(replyTo) =>
+        val roomId = room.get.id
+        replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+        Behaviors.same
+      case JoinMessage(replyTo, name) =>
+        val newRoom = room.get.addPlayer(name)
+        val roomId = newRoom.id
+        replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
+        apply(Some(newRoom))
     }
 }
