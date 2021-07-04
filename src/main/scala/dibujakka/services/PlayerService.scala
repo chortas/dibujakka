@@ -6,8 +6,8 @@ import akka.http.scaladsl.server.Directives.{handleWebSocketMessages, parameter,
 import akka.http.scaladsl.server.Route
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source, SourceQueueWithComplete}
-import dibujakka.HttpServerWithActorInteraction.system
-import dibujakka.RoomManager.PrintMsg
+import dibujakka.Server.system
+//import dibujakka.RoomManager.PrintMsg
 
 import scala.::
 
@@ -21,7 +21,7 @@ import scala.::
 
 trait PlayerService {
 
-  val route: Route = path("ws") {
+  val playersRoute: Route = path("ws") {
     parameter("roomId") {
       roomId => handleWebSocketMessages(receiveMessageFromClients(roomId))
     }
@@ -33,7 +33,7 @@ trait PlayerService {
     val inbound: Sink[Message, Any] = Sink.foreach({
       case tm: TextMessage =>
         println("TextMessage received in room:", roomId)
-        system ! PrintMsg(tm.getStrictText, roomId)
+//        system ! PrintMsg(tm.getStrictText, roomId)
       case bm: BinaryMessage =>
         // ignore binary messages but drain content to avoid the stream being clogged
         bm.dataStream.runWith(Sink.ignore)
