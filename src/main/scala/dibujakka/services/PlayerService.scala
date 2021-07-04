@@ -16,16 +16,6 @@ import dibujakka.{DrawClientCommand, WebSocketMessage}
 import spray.json.DefaultJsonProtocol.{jsonFormat2, _}
 import spray.json.{RootJsonFormat, _}
 
-//import dibujakka.RoomManager.PrintMsg
-
-//abstract class PlayerCommand(command: String) {
-//  def process() : Unit
-//}
-//
-//final case class DrawCommand(command: String) extends PlayerCommand(command) {
-//  def process(): Unit = println(command)
-//}
-
 trait PlayerService {
 
   val playersRoute: Route = path("ws") {
