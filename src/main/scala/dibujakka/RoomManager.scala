@@ -57,11 +57,11 @@ class RoomManager(context: ActorContext[RoomMessage],
                 roomActor ! DrawMessage(context.self, drawMessage)
               })
             Behaviors.same
-          case DrawClientCommand(drawMessage) =>
+          case ChatClientCommand(word) =>
             rooms
               .get(roomId)
               .foreach(roomActor => {
-                roomActor ! ChatMessage(context.self, drawMessage)
+                roomActor ! ChatMessage(context.self, word)
               })
             Behaviors.same
         }
