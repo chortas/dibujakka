@@ -2,6 +2,7 @@ package dibujakka
 
 import dibujakka.RoomMessages.RoomMessage
 import spray.json._
+import DefaultJsonProtocol._
 
 sealed trait ServerCommand extends RoomMessage {
   def toString(): String
@@ -24,9 +25,26 @@ case class ChatServerCommand(word: String) extends ServerCommand {
 }
 
 case class RoomServerCommand(room: Room) extends ServerCommand {
-  override def toString(): String =
-    """{ "messageType": "chat", "payload": { "status": "%s", "language": "%s", "scores": "%s", "totalTime": "%d", "remainingTime": "%d", "totalRounds": "%d", "currentRound": "%d", "word": "%s", "whoIsDrawing": "%s", "guess": "%s"} }"""
-      .format(room.status, room.language, "", 60, 10, room.totalRounds, room.currentRound, room.currentWord, "", "")
-      .parseJson
-      .toString()
+  override def toString(): String = {
+    val scores = room.players.toJson
+    """{ "messageType": "room", "payload": { "status": "%s", "language": "%s", "scores": %s, "totalTime": "%d", "remainingTime": "%d", "totalRounds": "%d", "currentRound": "%d", "word": "%s", "whoIsDrawing": "%s", "guess": "%s"} }"""
+    .format(room.status, room.language, scores, 60, 10, room.totalRounds, room.currentRound, room.currentWord, "", "")
+    .parseJson
+    .toString()
+  }
+
+  implicit object AnyJsonFormat extends JsonFormat[Any] {
+    def write(x: Any): JsValue with Serializable = x match {
+      case n: Int => JsNumber(n)
+      case s: String => JsString(s)
+      case b: Boolean if b => JsTrue
+      case b: Boolean if !b => JsFalse
+    }
+    def read(value: JsValue): Any = value match {
+      case JsNumber(n) => n.intValue
+      case JsString(s) => s
+      case JsTrue => true
+      case JsFalse => false
+    }
+  }
 }

@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import dibujakka.Room
+import dibujakka.RoomJsonProtocol.RoomJsonFormat
 import dibujakka.RoomManager.Rooms
 import dibujakka.RoomMessages.{CreateRoom, GetRooms}
 import dibujakka.Server.{roomManager, system}
@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 
 trait RoomService {
   // these are from spray-json
-  implicit val roomFormat: RootJsonFormat[Room] = jsonFormat9(Room)
+//  implicit val roomFormat: RootJsonFormat[Room] = jsonFormat8(Room)
   implicit val roomsFormat: RootJsonFormat[Rooms] = jsonFormat1(Rooms)
 
   val roomsRoute: Route =
