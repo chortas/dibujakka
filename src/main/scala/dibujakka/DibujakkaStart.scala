@@ -1,40 +1,36 @@
 package dibujakka
 
+import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorSystem, Behavior}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.model.ws.TextMessage
+import akka.stream.scaladsl.Flow
+import dibujakka.services.PlayerService
 
 
 object RoomManager {
-  final case class NewRoom(name: String)
+  trait Command
+  final case class NewRoom(name: String) extends Command
 
-  def apply(): Behavior[NewRoom] =
+  def apply(): Behavior[Command] =
     Behaviors.setup { context => {
         Behaviors.same
       }
     }
+
+  def Draw(roomManager: ActorRef[Command], roomId: String) : Flow[String, String, Any] = {
+    println("Room", roomId)
+    println("Message (Draw)", _)
+    _
+    Flow.fromSinkAndSource(in, out)
+  }
 }
 
-object HttpServerWithActorInteraction {
+object HttpServerWithActorInteraction extends PlayerService {
+  implicit val system: ActorSystem[RoomManager.Command] = ActorSystem(RoomManager(), "RoomManager")
+
   def main(args: Array[String]): Unit = {
-    implicit val system: ActorSystem[RoomManager.NewRoom] = ActorSystem(RoomManager(), "DibujakkaMain")
-
-    val route = path("ws") {
-      handleWebSocketMessages(ChatWebSocket.listen())
-    }
-
-    Http().newServerAt("127.0.0.1", 8080)
-      .bind(route)
-
-    readMessages()
-
-    def readMessages(): Unit =
-      for (ln <- io.Source.stdin.getLines) ln match {
-        case "" =>
-          system.terminate()
-          return
-        case other => ChatWebSocket.sendText(other)
-      }
+    Http().newServerAt("0.0.0.0", 8080).bind(route)
   }
 }

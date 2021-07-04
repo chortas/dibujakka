@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source, SourceQueueWithComplete}
 
-object ChatWebSocket {
+object ClientWebSocket {
   private var browserConnections: List[TextMessage => Unit] = List()
 
   def greeter(): Flow[Message, Message, Any] =
