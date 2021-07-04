@@ -25,7 +25,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
         apply(
           Some(
-            Room(id, name, totalRounds, maxPlayers, language, 0, 0, "waiting")
+            Room(id, name, totalRounds, maxPlayers, language, 0, 0, "waiting", "word")
           )
         )
       case AddRound() =>
@@ -41,9 +41,14 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
         Behaviors.same
-      case ChatMessage(replyTo, message) =>
+      case ChatMessage(replyTo, word) =>
         val roomId = room.get.id
-        replyTo ! SendToClients(roomId, ChatServerCommand(message))
+        val currentWord = room.get.currentWord
+        if (word.equalsIgnoreCase(currentWord)) {
+          replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+        } else {
+          replyTo ! SendToClients(roomId, ChatServerCommand(word))
+        }
         Behaviors.same
     }
 }

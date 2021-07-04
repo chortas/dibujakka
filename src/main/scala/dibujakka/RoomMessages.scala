@@ -31,5 +31,5 @@ object RoomMessages {
 
   case class DrawMessage(replyTo: ActorRef[SendToClients], message: String) extends RoomMessage
 
-  case class ChatMessage(replyTo: ActorRef[SendToClients], message: String) extends RoomMessage
+  case class ChatMessage(replyTo: ActorRef[SendToClients], word: String) extends RoomMessage
 }
