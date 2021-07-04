@@ -36,8 +36,6 @@ trait PlayerService {
       case tm: TextMessage =>
         val text = tm.getStrictText
 
-        println("Me llego: ", text)
-
         val webSocketMessage: WebSocketType =
           if (text.contains("chat"))
             text.parseJson.convertTo[WebSocketChatMessage]
