@@ -2,17 +2,13 @@ package dibujakka.services
 
 import akka.NotUsed
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
-import akka.http.scaladsl.server.Directives.{
-  handleWebSocketMessages,
-  parameter,
-  path
-}
+import akka.http.scaladsl.server.Directives.{handleWebSocketMessages, parameter, path}
 import akka.http.scaladsl.server.Route
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source, SourceQueueWithComplete}
 import dibujakka.RoomMessages.ClientMessage
 import dibujakka.Server.system
-import dibujakka.{DrawClientCommand, WebSocketMessage}
+import dibujakka.{ChatClientCommand, DrawClientCommand, WebSocketMessage}
 import spray.json.DefaultJsonProtocol.{jsonFormat2, _}
 import spray.json.{RootJsonFormat, _}
 
@@ -28,8 +24,8 @@ trait PlayerService {
     Map[String, List[TextMessage => Unit]]().withDefaultValue(List())
 
   def receiveMessageFromClients(
-    roomId: String
-  ): Flow[Message, Message, NotUsed] = {
+                                 roomId: String
+                               ): Flow[Message, Message, NotUsed] = {
     val inbound: Sink[Message, Any] = Sink.foreach({
       case tm: TextMessage =>
         implicit val wsFormat: RootJsonFormat[WebSocketMessage] =
@@ -43,6 +39,11 @@ trait PlayerService {
             system ! ClientMessage(
               roomId,
               DrawClientCommand(webSocketMessage.payload)
+            )
+          case "chat" =>
+            system ! ClientMessage(
+              roomId,
+              ChatClientCommand(webSocketMessage.payload)
             )
         }
         println("TextMessage received in room:", roomId)

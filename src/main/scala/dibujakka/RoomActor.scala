@@ -13,7 +13,8 @@ object RoomActor {
 }
 
 class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
-    extends AbstractBehavior[RoomMessage](context) {
+  extends AbstractBehavior[RoomMessage](context) {
+
   import RoomActor._
 
   override def onMessage(msg: RoomMessage) =
@@ -39,6 +40,10 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
+        Behaviors.same
+      case ChatMessage(replyTo, message) =>
+        val roomId = room.get.id
+        replyTo ! SendToClients(roomId, ChatServerCommand(message))
         Behaviors.same
     }
 }

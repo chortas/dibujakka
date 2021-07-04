@@ -14,3 +14,11 @@ case class DrawServerCommand(drawing: String) extends ServerCommand {
       .parseJson
       .toString()
 }
+
+case class ChatServerCommand(word: String) extends ServerCommand {
+  override def toString(): String =
+    """{ "type": "chat", "payload": "%s" }"""
+      .format(word)
+      .parseJson
+      .toString()
+}
