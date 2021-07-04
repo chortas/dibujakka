@@ -2,15 +2,21 @@ package dibujakka.services
 
 import akka.NotUsed
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
-import akka.http.scaladsl.server.Directives.{handleWebSocketMessages, parameter, path}
+import akka.http.scaladsl.server.Directives.{
+  handleWebSocketMessages,
+  parameter,
+  path,
+  _
+}
 import akka.http.scaladsl.server.Route
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source, SourceQueueWithComplete}
 import dibujakka.RoomMessages.ClientMessage
 import dibujakka.Server.system
-import dibujakka.{ChatClientCommand, DrawClientCommand, JoinClientCommand, StartClientCommand, WebSocketMessage}
-import spray.json.DefaultJsonProtocol.{jsonFormat2, _}
-import spray.json.{RootJsonFormat, _}
+import dibujakka.WebSocketChatMessageProtocol._
+import dibujakka.WebSocketMessageProtocol._
+import dibujakka._
+import spray.json._
 
 trait PlayerService {
 
@@ -24,36 +30,46 @@ trait PlayerService {
     Map[String, List[TextMessage => Unit]]().withDefaultValue(List())
 
   def receiveMessageFromClients(
-                                 roomId: String
-                               ): Flow[Message, Message, NotUsed] = {
+    roomId: String
+  ): Flow[Message, Message, NotUsed] = {
     val inbound: Sink[Message, Any] = Sink.foreach({
       case tm: TextMessage =>
-        implicit val wsFormat: RootJsonFormat[WebSocketMessage] =
-          jsonFormat2(WebSocketMessage)
+        val text = tm.getStrictText
 
-        val webSocketMessage =
-          tm.getStrictText.parseJson.convertTo[WebSocketMessage]
+        println("Me llego: ", text)
+
+        val webSocketMessage: WebSocketType =
+          if (text.contains("chat"))
+            text.parseJson.convertTo[WebSocketChatMessage]
+          else text.parseJson.convertTo[WebSocketMessage]
 
         webSocketMessage.messageType match {
           case "draw" =>
+            val newWebSocketMessage: WebSocketMessage =
+              webSocketMessage.asInstanceOf[WebSocketMessage]
             system ! ClientMessage(
               roomId,
-              DrawClientCommand(webSocketMessage.payload)
+              DrawClientCommand(newWebSocketMessage.payload.toString)
             )
           case "chat" =>
+            val newWebSocketChatMessage: WebSocketChatMessage =
+              webSocketMessage.asInstanceOf[WebSocketChatMessage]
+
             system ! ClientMessage(
               roomId,
-              ChatClientCommand(webSocketMessage.payload)
+              ChatClientCommand(
+                newWebSocketChatMessage.word,
+                newWebSocketChatMessage.userName
+              )
             )
           case "start" =>
-            system ! ClientMessage(
-              roomId,
-              StartClientCommand()
-            )
+            system ! ClientMessage(roomId, StartClientCommand())
           case "join" =>
+            val newWebSocketMessage: WebSocketMessage =
+              webSocketMessage.asInstanceOf[WebSocketMessage]
             system ! ClientMessage(
               roomId,
-              JoinClientCommand(webSocketMessage.payload)
+              JoinClientCommand(newWebSocketMessage.payload.toString)
             )
         }
         println("TextMessage received in room:", roomId)

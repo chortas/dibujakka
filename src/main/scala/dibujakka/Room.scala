@@ -1,10 +1,19 @@
 package dibujakka
 
-import spray.json.{DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
+import spray.json.{
+  DefaultJsonProtocol,
+  JsArray,
+  JsNumber,
+  JsObject,
+  JsString,
+  JsValue,
+  RootJsonFormat,
+  deserializationError
+}
 
 object RoomJsonProtocol extends DefaultJsonProtocol {
   implicit object RoomJsonFormat extends RootJsonFormat[Room] {
-    def write(room: Room) : JsObject =
+    def write(room: Room): JsObject =
       JsObject(
         "id" -> JsString(room.id),
         "name" -> JsString(room.name),
@@ -18,16 +27,18 @@ object RoomJsonProtocol extends DefaultJsonProtocol {
       )
 
     def read(value: JsValue): Room = value match {
-      case JsArray(Vector(
-        JsString(id),
-        JsString(name),
-        JsNumber(totalRounds),
-        JsNumber(maxPlayers),
-        JsString(language),
-        JsNumber(currentRound),
-        JsString(status),
-        JsString(currentWord),
-      )) =>
+      case JsArray(
+          Vector(
+            JsString(id),
+            JsString(name),
+            JsNumber(totalRounds),
+            JsNumber(maxPlayers),
+            JsString(language),
+            JsNumber(currentRound),
+            JsString(status),
+            JsString(currentWord),
+          )
+          ) =>
         new Room(
           id,
           name,
@@ -42,7 +53,6 @@ object RoomJsonProtocol extends DefaultJsonProtocol {
     }
   }
 }
-
 
 object Room {
   def apply(id: String,
@@ -76,13 +86,38 @@ case class Room(id: String,
                 currentRound: Int,
                 status: String,
                 currentWord: String,
-                players: Map[String, Int] = Map.empty
-               ) {
+                players: Map[String, Int] = Map.empty) {
 
   import Room._
 
+  // NTH: use currying. See https://www.baeldung.com/scala/currying
   def addPlayer(name: String): Room = {
     val score = players.getOrElse(name, 0)
-    apply(id, name, totalRounds, maxPlayers, language, currentRound, status, currentWord, players.updated(name, score))
+    apply(
+      id,
+      name,
+      totalRounds,
+      maxPlayers,
+      language,
+      currentRound,
+      status,
+      currentWord,
+      players.updated(name, score)
+    )
+  }
+
+  def addScore(name: String): Room = {
+    val newScore = players.getOrElse(name, 0) + 1
+    apply(
+      id,
+      name,
+      totalRounds,
+      maxPlayers,
+      language,
+      currentRound,
+      status,
+      currentWord,
+      players.updated(name, newScore)
+    )
   }
 }

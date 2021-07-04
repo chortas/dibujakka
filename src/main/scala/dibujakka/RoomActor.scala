@@ -33,7 +33,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
               language,
               0,
               "waiting",
-              "word",
+              "word", //TODO: change this harcoded word
               Map.empty
             )
           )
@@ -48,22 +48,23 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room])
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
         Behaviors.same
-      case ChatMessage(replyTo, word) =>
-        // Must receive the username so if he guessed the word, the score goes up.
+      case ChatMessage(replyTo, word, userName) =>
         val roomId = room.get.id
         val currentWord = room.get.currentWord
         if (word.equalsIgnoreCase(currentWord)) {
-          replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+          val newRoom = room.get.addScore(userName)
+          replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
+          apply(Some(newRoom))
         } else {
           replyTo ! SendToClients(roomId, ChatServerCommand(word))
+          Behaviors.same
         }
-        Behaviors.same
       case StartMessage(replyTo) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
         Behaviors.same
-      case JoinMessage(replyTo, name) =>
-        val newRoom = room.get.addPlayer(name)
+      case JoinMessage(replyTo, userName) =>
+        val newRoom = room.get.addPlayer(userName)
         val roomId = newRoom.id
         replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
         apply(Some(newRoom))
