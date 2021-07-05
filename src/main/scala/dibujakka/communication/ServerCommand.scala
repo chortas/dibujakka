@@ -57,6 +57,7 @@ case class RoomServerCommand(room: Room) extends ServerCommand {
       case JsString(s) => s
       case JsTrue      => true
       case JsFalse     => false
+      case _           => None
     }
   }
 }

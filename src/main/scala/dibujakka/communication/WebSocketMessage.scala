@@ -27,10 +27,12 @@ object WebSocketMessageProtocol extends DefaultJsonProtocol {
         "payload" -> JsString(webSocketMessage.payload),
       )
 
-    def read(value: JsValue): WebSocketMessage = value match {
-      case JsArray(Vector(JsString(messageType), JsString(payload))) =>
-        WebSocketMessage(messageType, payload)
-      case _ => deserializationError("Web Socket Message expected")
+    def read(value: JsValue): WebSocketMessage = {
+      val fields = value.asJsObject("Web Socket Message expected").fields
+      WebSocketMessage(
+        messageType = fields("messageType").convertTo[String],
+        payload = fields("payload").convertTo[String]
+      )
     }
   }
 }

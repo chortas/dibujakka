@@ -7,7 +7,7 @@ import dibujakka.room.RoomManager.Rooms
 object RoomMessages {
   trait RoomMessage
 
-  case class AddRound() extends RoomMessage
+  case class NextRound(replyTo: ActorRef[SendToClients]) extends RoomMessage
 
   case class AddPlayer() extends RoomMessage
 
