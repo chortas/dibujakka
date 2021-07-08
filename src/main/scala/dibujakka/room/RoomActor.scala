@@ -59,7 +59,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
             playersWhoGuessed = List.empty
           )
           val newNextRoundScheduled: Option[Cancellable] = Some(context.system.scheduler.scheduleOnce(
-            10.seconds,
+            1.seconds,
             () => context.self ! NextRound(replyTo)
           ))
           replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))

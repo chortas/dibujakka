@@ -141,7 +141,7 @@ case class Room(id: String,
   }
 
   def allPlayersGuessed: Boolean = {
-    scores.size == playersWhoGuessed.size
+    playersWhoGuessed.size == (players.size - 1) // the player that is drawing cant guess
   }
 
   def hasFinishedAllRounds: Boolean = {
