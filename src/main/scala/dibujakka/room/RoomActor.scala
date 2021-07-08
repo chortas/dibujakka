@@ -39,14 +39,14 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
               0,
               "waiting",
               "word", //TODO: change this harcoded word
-              Map.empty
             )
           ),
           None
         )
       case NextRound(replyTo) =>
-        val newRoom = room.get.copy(currentRound = room.get.currentRound + 1)
+        val newRoom = room.get.copy(currentRound = room.get.currentRound + 1, playersWhoGuessed = List.empty)
         replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
+        nextRoundScheduled.foreach(_.cancel())
         val newNextRoundScheduled: Option[Cancellable] = Some(context.system.scheduler.scheduleOnce(
           3.seconds,
           () => context.self ! NextRound(replyTo)
@@ -60,10 +60,12 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
         val roomId = room.get.id
         val currentWord = room.get.currentWord
         if (word.equalsIgnoreCase(currentWord)) {
-          val newRoom = room.get.addScore(userName)
-          replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
-          //TODO: NTH IF EVERYONE GUESSES context.self ! NextRound(replyTo)
-          //TODO: nextRoundScheduled.foreach(_.cancel())
+          val newRoom = room.get.updateScores(userName)
+          if (newRoom.allPlayersGuessed) {
+            context.self ! NextRound(replyTo)
+          } else {
+            replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
+          }
           apply(Some(newRoom), nextRoundScheduled)
         } else {
           replyTo ! SendToClients(roomId, ChatServerCommand(word))
