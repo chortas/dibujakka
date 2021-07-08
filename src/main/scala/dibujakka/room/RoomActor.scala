@@ -9,6 +9,8 @@ import dibujakka.room.RoomMessages._
 import scala.concurrent.duration._
 import dibujakka.Server.system._
 
+import scala.util.Random.between
+
 object RoomActor {
   def apply(): Behavior[RoomMessage] =
     Behaviors.setup(context => new RoomActor(context, None, None))
@@ -45,14 +47,19 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
         )
       case NextRound(replyTo) =>
         nextRoundScheduled.foreach(_.cancel())
+        //TODO: sumarle puntos a quien dibujó de acuerdo a cuántos adivinaron
         if (room.get.hasFinishedAllRounds) {
-          val newRoom = room.get.copy(currentRound = 0, status = "waiting", playersWhoGuessed = List.empty)
+          val newRoom = room.get.copy(status = "finished")
           replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
           apply(Some(newRoom), None)
         } else {
-          val newRoom = room.get.copy(currentRound = room.get.currentRound + 1, playersWhoGuessed = List.empty)
+          val newRoom = room.get.copy(
+            currentRound = room.get.currentRound + 1,
+            whoIsDrawingIdx = (room.get.whoIsDrawingIdx + 1) % room.get.players.size,
+            playersWhoGuessed = List.empty
+          )
           val newNextRoundScheduled: Option[Cancellable] = Some(context.system.scheduler.scheduleOnce(
-          10.seconds,
+            10.seconds,
             () => context.self ! NextRound(replyTo)
           ))
           replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
@@ -69,7 +76,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
           if (room.get.playerHasGuessed(userName)) {
             Behaviors.same
           } else {
-            val newRoom = room.get.updateScores(userName)
+            val newRoom = room.get.updateScores(userName) //TODO: players.size - guessed
             if (newRoom.allPlayersGuessed) {
               context.self ! NextRound(replyTo)
             }
@@ -82,7 +89,12 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
         }
       case StartMessage(replyTo) =>
         context.self ! NextRound(replyTo)
-        val newRoom = room.get.copy(status = "in progress")
+        val newRoom = room.get.copy(
+          currentRound = 0,
+          status = "in progress",
+          whoIsDrawingIdx = between(0, room.get.players.size),
+          playersWhoGuessed = List.empty
+        )
         apply(Some(newRoom), nextRoundScheduled)
       case JoinMessage(replyTo, userName) =>
         val newRoom = room.get.addPlayer(userName)
