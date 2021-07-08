@@ -70,6 +70,9 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
         Behaviors.same
       case ChatMessage(replyTo, word, userName) =>
+        if (userName.equals(room.get.players(room.get.whoIsDrawingIdx))) { // the player who is drawing cant chat
+          Behaviors.same
+        }
         val roomId = room.get.id
         val currentWord = room.get.currentWord
         if (word.equalsIgnoreCase(currentWord)) {
