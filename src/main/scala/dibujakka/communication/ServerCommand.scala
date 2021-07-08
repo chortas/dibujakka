@@ -39,7 +39,7 @@ case class RoomServerCommand(room: Room) extends ServerCommand {
         room.totalRounds,
         room.currentRound,
         room.currentWord,
-        room.players(room.whoIsDrawingIdx),
+        room.getDrawer,
         playersWhoGuessed
       )
       .parseJson

@@ -122,8 +122,30 @@ case class Room(id: String,
     )
   }
 
+  def canStart: Boolean = {
+    players.size > 1
+  }
+
+  def getDrawer: String = {
+    players(whoIsDrawingIdx)
+  }
+
+  def isDrawing(name: String): Boolean = {
+    name.equals(getDrawer)
+  }
+
+  def nextDrawingIndex: Int = {
+    (whoIsDrawingIdx + 1) % players.size
+  }
+
   def updateScores(name: String): Room = {
-    val newScore = scores.getOrElse(name, 0) + 1
+    var newScore = scores.getOrElse(name, 0)
+    if (isDrawing(name)) {
+      newScore += playersWhoGuessed.size * 2
+    } else {
+      // give more points to the player who guesses earlier
+      newScore += players.size - playersWhoGuessed.size
+    }
     apply(
       id = id,
       name = name,
