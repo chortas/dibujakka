@@ -129,7 +129,7 @@ case class Room(id: String,
     players.size == playersWhoGuessed.size
   }
 
-  def isInLastRound: Boolean = {
+  def hasFinishedAllRounds: Boolean = {
     currentRound == totalRounds
   }
 }

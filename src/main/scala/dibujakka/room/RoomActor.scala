@@ -44,14 +44,20 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
           None
         )
       case NextRound(replyTo) =>
-        val newRoom = room.get.copy(currentRound = room.get.currentRound + 1, playersWhoGuessed = List.empty)
-        replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
         nextRoundScheduled.foreach(_.cancel())
-        val newNextRoundScheduled: Option[Cancellable] = Some(context.system.scheduler.scheduleOnce(
+        if (room.get.hasFinishedAllRounds) {
+          val newRoom = room.get.copy(currentRound = 0, status = "waiting")
+          replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
+          apply(Some(newRoom), None)
+        } else {
+          val newRoom = room.get.copy(currentRound = room.get.currentRound + 1, playersWhoGuessed = List.empty)
+          val newNextRoundScheduled: Option[Cancellable] = Some(context.system.scheduler.scheduleOnce(
           3.seconds,
-          () => context.self ! NextRound(replyTo)
-        ))
-        apply(Some(newRoom), newNextRoundScheduled)
+            () => context.self ! NextRound(replyTo)
+          ))
+          replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
+          apply(Some(newRoom), newNextRoundScheduled)
+        }
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
