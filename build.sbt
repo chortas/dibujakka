@@ -8,6 +8,9 @@ lazy val akkaVersion = "2.6.14"
 lazy val akkaHttpVersion = "10.2.4"
 lazy val doobieVersion = "0.12.1"
 
+enablePlugins(JavaAppPackaging)
+mainClass in Compile := Some("dibujakka.Server")
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
   "ch.qos.logback" % "logback-classic" % "1.2.3",
@@ -20,5 +23,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion,
   "org.tpolecat" %% "doobie-core" % doobieVersion,
   "org.tpolecat" %% "doobie-postgres" % doobieVersion,
-  "org.tpolecat" %% "doobie-specs2"   % doobieVersion
+  "org.tpolecat" %% "doobie-specs2"   % doobieVersion,
+  "ch.megard" %% "akka-http-cors" % "1.1.1"
 )
