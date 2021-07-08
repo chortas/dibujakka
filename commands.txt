@@ -1,0 +1,26 @@
+var webSocket = new WebSocket('ws://127.0.0.1:8080/ws?roomId=1');
+webSocket.onmessage = function(data) { console.log(data.data); }
+webSocket.send(JSON.stringify({
+    messageType: "join",
+    payload: "robin"
+}))
+
+
+var webSocket = new WebSocket('ws://127.0.0.1:8080/ws?roomId=1');
+webSocket.onmessage = function(data) { console.log(data.data); }
+webSocket.send(JSON.stringify({
+    messageType: "join",
+    payload: "ceci"
+}))
+
+
+webSocket.send(JSON.stringify({
+    messageType: "start",
+    payload: ""
+}))
+
+webSocket.send(JSON.stringify({
+    messageType: "chat",
+    word: "word",
+    userName: "ceci"
+}))

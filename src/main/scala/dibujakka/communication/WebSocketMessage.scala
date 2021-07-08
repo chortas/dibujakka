@@ -2,12 +2,10 @@ package dibujakka.communication
 
 import spray.json.{
   DefaultJsonProtocol,
-  JsArray,
   JsObject,
   JsString,
   JsValue,
-  RootJsonFormat,
-  deserializationError
+  RootJsonFormat
 }
 
 abstract class WebSocketType(val messageType: String)
