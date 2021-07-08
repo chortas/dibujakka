@@ -63,7 +63,8 @@ object Room {
             currentRound: Int,
             status: String,
             currentWord: String,
-            players: Map[String, Int] = Map.empty) = {
+            players: Map[String, Int] = Map.empty,
+            playersWhoGuessed: List[String] = List.empty) = {
     new Room(
       id,
       name,
@@ -73,7 +74,8 @@ object Room {
       currentRound,
       status,
       currentWord,
-      players
+      players,
+      playersWhoGuessed
     )
   }
 }
@@ -86,7 +88,8 @@ case class Room(id: String,
                 currentRound: Int,
                 status: String,
                 currentWord: String,
-                players: Map[String, Int] = Map.empty) {
+                players: Map[String, Int] = Map.empty,
+                playersWhoGuessed: List[String] = List.empty) {
 
   import Room._
 
@@ -106,7 +109,7 @@ case class Room(id: String,
     )
   }
 
-  def addScore(name: String): Room = {
+  def updateScores(name: String): Room = {
     val newScore = players.getOrElse(name, 0) + 1
     apply(
       id,
@@ -117,7 +120,20 @@ case class Room(id: String,
       currentRound,
       status,
       currentWord,
-      players.updated(name, newScore)
+      players.updated(name, newScore),
+      playersWhoGuessed.::(name)
     )
+  }
+
+  def allPlayersGuessed: Boolean = {
+    players.size == playersWhoGuessed.size
+  }
+
+  def hasFinishedAllRounds: Boolean = {
+    currentRound == totalRounds
+  }
+
+  def playerHasGuessed(userName: String): Boolean = {
+    playersWhoGuessed contains userName
   }
 }
