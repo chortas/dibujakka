@@ -1,15 +1,7 @@
 package dibujakka.room
 
-import spray.json.{
-  DefaultJsonProtocol,
-  JsArray,
-  JsNumber,
-  JsObject,
-  JsString,
-  JsValue,
-  RootJsonFormat,
-  deserializationError
-}
+import dibujakka.persistence.Word
+import spray.json.{DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
 object RoomJsonProtocol extends DefaultJsonProtocol {
   implicit object RoomJsonFormat extends RootJsonFormat[Room] {
@@ -22,7 +14,6 @@ object RoomJsonProtocol extends DefaultJsonProtocol {
         "language" -> JsString(room.language),
         "currentRound" -> JsNumber(room.currentRound),
         "status" -> JsString(room.status),
-        "currentWord" -> JsString(room.currentWord),
         "playersCount" -> JsNumber(room.scores.size),
       )
 
@@ -36,7 +27,6 @@ object RoomJsonProtocol extends DefaultJsonProtocol {
             JsString(language),
             JsNumber(currentRound),
             JsString(status),
-            JsString(currentWord),
           )
           ) =>
         new Room(
@@ -47,7 +37,7 @@ object RoomJsonProtocol extends DefaultJsonProtocol {
           language = language,
           currentRound = currentRound.toInt,
           status = status,
-          currentWord = currentWord,
+          currentWord = None,
           scores = Map.empty,
           players = List.empty,
           whoIsDrawingIdx = 0,
@@ -66,7 +56,7 @@ object Room {
             language: String,
             currentRound: Int,
             status: String,
-            currentWord: String,
+            currentWord: Option[Word],
             scores: Map[String, Int] = Map.empty,
             players: List[String] = List.empty,
             whoIsDrawingIdx: Int = 0,
@@ -95,7 +85,7 @@ case class Room(id: String,
                 language: String,
                 currentRound: Int,
                 status: String,
-                currentWord: String,
+                currentWord: Option[Word],
                 scores: Map[String, Int],
                 players: List[String],
                 whoIsDrawingIdx: Int,

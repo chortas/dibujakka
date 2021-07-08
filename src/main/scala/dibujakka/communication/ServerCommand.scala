@@ -1,11 +1,11 @@
 package dibujakka.communication
 
 import dibujakka.room.Room
-import dibujakka.room.RoomMessages.RoomMessage
+import dibujakka.messages.DibujakkaMessages.DibujakkaMessage
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-sealed trait ServerCommand extends RoomMessage {
+sealed trait ServerCommand extends DibujakkaMessage {
   def toString(): String
 }
 
@@ -25,7 +25,8 @@ case class ChatServerCommand(word: String) extends ServerCommand {
       .toString()
 }
 
-case class RoomServerCommand(room: Room) extends ServerCommand {
+case class DibujakkaServerCommand(room: Room) extends ServerCommand {
+
   override def toString(): String = {
     val scores = room.scores.toJson
     val playersWhoGuessed = room.playersWhoGuessed.toJson
@@ -38,7 +39,10 @@ case class RoomServerCommand(room: Room) extends ServerCommand {
         10,
         room.totalRounds,
         room.currentRound,
-        room.currentWord,
+        room.currentWord match {
+          case Some(word) => word.text
+          case None => ""
+        },
         room.getDrawer,
         playersWhoGuessed
       )

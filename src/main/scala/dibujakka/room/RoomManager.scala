@@ -11,7 +11,7 @@ import dibujakka.communication.{
   JoinClientCommand,
   StartClientCommand
 }
-import dibujakka.room.RoomMessages._
+import dibujakka.messages.DibujakkaMessages._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,23 +19,23 @@ import scala.concurrent.{ExecutionContext, Future}
 object RoomManager {
   case class Rooms(rooms: List[Room])
 
-  def apply(): Behavior[RoomMessage] =
+  def apply(): Behavior[DibujakkaMessage] =
     Behaviors.setup(context => new RoomManager(context, Map.empty))
 
-  def apply(rooms: Map[String, ActorRef[RoomMessage]]): Behavior[RoomMessage] =
+  def apply(rooms: Map[String, ActorRef[DibujakkaMessage]]): Behavior[DibujakkaMessage] =
     Behaviors.setup(context => new RoomManager(context, rooms))
 }
 
-class RoomManager(context: ActorContext[RoomMessage],
-                  rooms: Map[String, ActorRef[RoomMessage]])
-    extends AbstractBehavior[RoomMessage](context) {
+class RoomManager(context: ActorContext[DibujakkaMessage],
+                  rooms: Map[String, ActorRef[DibujakkaMessage]])
+    extends AbstractBehavior[DibujakkaMessage](context) {
 
   implicit val system: ActorSystem[Nothing] = context.system
   implicit val executionContext: ExecutionContext = context.executionContext
 
   import RoomManager._
 
-  override def onMessage(message: RoomMessage): Behavior[RoomMessage] =
+  override def onMessage(message: DibujakkaMessage): Behavior[DibujakkaMessage] =
     message match {
       case GetRooms(replyTo) =>
         implicit val timeout: Timeout = 10.seconds

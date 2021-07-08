@@ -6,6 +6,7 @@ scalaVersion := "2.13.1"
 
 lazy val akkaVersion = "2.6.14"
 lazy val akkaHttpVersion = "10.2.4"
+lazy val doobieVersion = "0.12.1"
 
 enablePlugins(JavaAppPackaging)
 mainClass in Compile := Some("dibujakka.Server")
@@ -20,5 +21,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion,
-  "ch.megard" %% "akka-http-cors" % "1.1.1",
+  "org.tpolecat" %% "doobie-core" % doobieVersion,
+  "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+  "org.tpolecat" %% "doobie-specs2"   % doobieVersion,
+  "ch.megard" %% "akka-http-cors" % "1.1.1"
 )

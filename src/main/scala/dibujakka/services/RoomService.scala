@@ -9,7 +9,7 @@ import akka.util.Timeout
 import dibujakka.Server.{roomManager, system}
 import dibujakka.room.RoomJsonProtocol.RoomJsonFormat
 import dibujakka.room.RoomManager.Rooms
-import dibujakka.room.RoomMessages.{CreateRoom, GetRooms}
+import dibujakka.messages.DibujakkaMessages.{CreateRoom, GetRooms}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 

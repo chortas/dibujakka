@@ -15,7 +15,7 @@ import dibujakka.Server.system
 import dibujakka.communication.WebSocketChatMessageProtocol._
 import dibujakka.communication.WebSocketMessageProtocol._
 import dibujakka.communication._
-import dibujakka.room.RoomMessages.ClientMessage
+import dibujakka.messages.DibujakkaMessages.ClientMessage
 import spray.json._
 
 trait PlayerService {

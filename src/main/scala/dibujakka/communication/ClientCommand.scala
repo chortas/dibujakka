@@ -1,8 +1,8 @@
 package dibujakka.communication
 
-import dibujakka.room.RoomMessages.RoomMessage
+import dibujakka.messages.DibujakkaMessages.DibujakkaMessage
 
-sealed trait ClientCommand extends RoomMessage
+sealed trait ClientCommand extends DibujakkaMessage
 
 case class DrawClientCommand(message: String) extends ClientCommand
 
