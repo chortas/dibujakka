@@ -46,7 +46,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
       case NextRound(replyTo) =>
         nextRoundScheduled.foreach(_.cancel())
         if (room.get.hasFinishedAllRounds) {
-          val newRoom = room.get.copy(currentRound = 0, status = "waiting")
+          val newRoom = room.get.copy(currentRound = 0, status = "waiting", playersWhoGuessed = List.empty)
           replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
           apply(Some(newRoom), None)
         } else {
