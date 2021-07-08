@@ -132,4 +132,8 @@ case class Room(id: String,
   def hasFinishedAllRounds: Boolean = {
     currentRound == totalRounds
   }
+
+  def playerHasGuessed(userName: String): Boolean = {
+    playersWhoGuessed contains userName
+  }
 }

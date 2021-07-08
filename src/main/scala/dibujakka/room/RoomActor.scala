@@ -66,13 +66,18 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
         val roomId = room.get.id
         val currentWord = room.get.currentWord
         if (word.equalsIgnoreCase(currentWord)) {
-          val newRoom = room.get.updateScores(userName)
-          if (newRoom.allPlayersGuessed) {
-            context.self ! NextRound(replyTo)
+          if (room.get.playerHasGuessed(userName)) {
+            replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
+            Behaviors.same
           } else {
-            replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
+            val newRoom = room.get.updateScores(userName)
+            if (newRoom.allPlayersGuessed) {
+              context.self ! NextRound(replyTo)
+            } else {
+              replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
+            }
+            apply(Some(newRoom), nextRoundScheduled)
           }
-          apply(Some(newRoom), nextRoundScheduled)
         } else {
           replyTo ! SendToClients(roomId, ChatServerCommand(word))
           Behaviors.same
