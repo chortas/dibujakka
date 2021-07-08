@@ -52,7 +52,7 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
         } else {
           val newRoom = room.get.copy(currentRound = room.get.currentRound + 1, playersWhoGuessed = List.empty)
           val newNextRoundScheduled: Option[Cancellable] = Some(context.system.scheduler.scheduleOnce(
-          3.seconds,
+          10.seconds,
             () => context.self ! NextRound(replyTo)
           ))
           replyTo ! SendToClients(newRoom.id, RoomServerCommand(newRoom))
@@ -67,15 +67,13 @@ class RoomActor(context: ActorContext[RoomMessage], room: Option[Room], nextRoun
         val currentWord = room.get.currentWord
         if (word.equalsIgnoreCase(currentWord)) {
           if (room.get.playerHasGuessed(userName)) {
-            replyTo ! SendToClients(roomId, RoomServerCommand(room.get))
             Behaviors.same
           } else {
             val newRoom = room.get.updateScores(userName)
             if (newRoom.allPlayersGuessed) {
               context.self ! NextRound(replyTo)
-            } else {
-              replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
             }
+            replyTo ! SendToClients(roomId, RoomServerCommand(newRoom))
             apply(Some(newRoom), nextRoundScheduled)
           }
         } else {

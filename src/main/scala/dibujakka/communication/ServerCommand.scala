@@ -29,7 +29,7 @@ case class RoomServerCommand(room: Room) extends ServerCommand {
   override def toString(): String = {
     val scores = room.players.toJson
     val playersWhoGuessed = room.playersWhoGuessed.toJson
-    """{ "messageType": "room", "payload": { "status": "%s", "language": "%s", "scores": %s, "totalTime": "%d", "remainingTime": "%d", "totalRounds": "%d", "currentRound": "%d", "word": "%s", "whoIsDrawing": "%s", "guess": "%s", "playersWhoGuessed": %s} }"""
+    """{ "messageType": "room", "payload": { "status": "%s", "language": "%s", "scores": %s, "totalTime": "%d", "remainingTime": "%d", "totalRounds": "%d", "currentRound": "%d", "word": "%s", "whoIsDrawing": "%s", "playersWhoGuessed": %s} }"""
       .format(
         room.status,
         room.language,
@@ -39,7 +39,6 @@ case class RoomServerCommand(room: Room) extends ServerCommand {
         room.totalRounds,
         room.currentRound,
         room.currentWord,
-        "",
         "",
         playersWhoGuessed
       )
