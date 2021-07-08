@@ -2,7 +2,6 @@ package dibujakka.communication
 
 import dibujakka.room.Room
 import dibujakka.messages.DibujakkaMessages.DibujakkaMessage
-import dibujakka.persistence.Word
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 

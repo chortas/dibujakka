@@ -43,13 +43,13 @@ object DibujakkaMessages {
   case class JoinMessage(replyTo: ActorRef[SendToClients], name: String)
       extends DibujakkaMessage
 
+  // TODO NTH: Get only words that haven't been played
   case class GetWord(replyTo: ActorRef[Option[Word]]) extends DibujakkaMessage
 
   case class UpdateWordMetrics(word: Word, wasGuessed: Boolean) extends DibujakkaMessage
 
+  // TODO NTH
   // case class GetWordE(replyTo: ActorRef[?], difficulty: Int) extends DbMessage
-
   // case class GetWordLE(replyTo: ActorRef[?], difficulty: Int) extends DbMessage
-
   // case class GetWordGE(replyTo: ActorRef[?], difficulty: Int) extends DbMessage
 }

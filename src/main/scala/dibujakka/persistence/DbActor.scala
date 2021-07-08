@@ -3,7 +3,6 @@ package dibujakka.persistence
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors._
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext}
-import dibujakka.Server.system._
 import doobie._
 import doobie.implicits._
 import cats._
