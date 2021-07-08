@@ -1,14 +1,16 @@
 package dibujakka.room
 
 import akka.actor.Cancellable
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.{ActorRef, Behavior, Scheduler}
 import akka.actor.typed.scaladsl.Behaviors._
+import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext}
-import dibujakka.Server.system._
+import akka.util.Timeout
 import dibujakka.communication.{ChatServerCommand, DibujakkaServerCommand, DrawServerCommand}
-import dibujakka.persistence.DbActor
+import dibujakka.persistence.{DbActor, Word}
 import dibujakka.messages.DibujakkaMessages._
 
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.Random.between
 
@@ -23,6 +25,9 @@ object RoomActor {
 class RoomActor(context: ActorContext[DibujakkaMessage], room: Option[Room],
                 nextRoundScheduled: Option[Cancellable], dbActorRef: Option[ActorRef[DibujakkaMessage]])
   extends AbstractBehavior[DibujakkaMessage](context) {
+  implicit val scheduler: Scheduler = context.system.scheduler
+  implicit val executionContext: ExecutionContext = context.executionContext
+  implicit val timeout: Timeout = 10.seconds
 
   import RoomActor._
 
@@ -43,7 +48,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage], room: Option[Room],
               language,
               0,
               "waiting",
-              "word", //TODO: change this harcoded word
+              None,
             )
           ),
           None,
@@ -51,8 +56,13 @@ class RoomActor(context: ActorContext[DibujakkaMessage], room: Option[Room],
         )
       case NextRound(replyTo) =>
         nextRoundScheduled.foreach(_.cancel())
+        val futureWord: Future[Option[Word]] = dbActorRef.get ? GetWord
+        val word: Option[Word] = Await.result(futureWord, timeout.duration)
+
         var newRoom = room.get.updateScores(room.get.getDrawer)
         var newNextRoundScheduled: Option[Cancellable] = None
+        newRoom = newRoom.copy(currentWord = word)
+
         if (newRoom.hasFinishedAllRounds) {
           newRoom = newRoom.copy(status = "finished")
           replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
@@ -63,7 +73,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage], room: Option[Room],
             playersWhoGuessed = List.empty
           )
           newNextRoundScheduled = Some(context.system.scheduler.scheduleOnce(
-            30.seconds,
+            5.seconds,
             () => context.self ! NextRound(replyTo)
           ))
           replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
@@ -75,9 +85,9 @@ class RoomActor(context: ActorContext[DibujakkaMessage], room: Option[Room],
         this
       case ChatMessage(replyTo, word, userName) =>
         var newRoom = room.get
-        if (!newRoom.isDrawing(userName))  {
+        if (!newRoom.isDrawing(userName)) {
           val currentWord = newRoom.currentWord
-          if (word.equalsIgnoreCase(currentWord)) {
+          if (word.equalsIgnoreCase(currentWord.get.text)) {
             if (!newRoom.playerHasGuessed(userName)) {
               newRoom = newRoom.updateScores(userName)
               replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))

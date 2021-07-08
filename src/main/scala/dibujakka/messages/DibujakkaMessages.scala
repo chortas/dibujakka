@@ -45,7 +45,7 @@ object DibujakkaMessages {
 
   case class GetWord(replyTo: ActorRef[Option[Word]]) extends DibujakkaMessage
 
-  case class UpdateWordMetrics(wordId: Word, wasGuessed: Boolean) extends DibujakkaMessage
+  case class UpdateWordMetrics(word: Word, wasGuessed: Boolean) extends DibujakkaMessage
 
   // case class GetWordE(replyTo: ActorRef[?], difficulty: Int) extends DbMessage
 

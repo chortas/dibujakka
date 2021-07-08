@@ -2,6 +2,7 @@ package dibujakka.communication
 
 import dibujakka.room.Room
 import dibujakka.messages.DibujakkaMessages.DibujakkaMessage
+import dibujakka.persistence.Word
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -26,6 +27,7 @@ case class ChatServerCommand(word: String) extends ServerCommand {
 }
 
 case class DibujakkaServerCommand(room: Room) extends ServerCommand {
+
   override def toString(): String = {
     val scores = room.scores.toJson
     val playersWhoGuessed = room.playersWhoGuessed.toJson
@@ -38,7 +40,10 @@ case class DibujakkaServerCommand(room: Room) extends ServerCommand {
         10,
         room.totalRounds,
         room.currentRound,
-        room.currentWord,
+        room.currentWord match {
+          case Some(word) => word.text
+          case None => ""
+        },
         room.getDrawer,
         playersWhoGuessed
       )
