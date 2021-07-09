@@ -96,6 +96,7 @@ case class Room(id: String,
   // NTH: use currying. See https://www.baeldung.com/scala/currying
   def addPlayer(userName: String): Room = {
     val score = scores.getOrElse(userName, 0)
+    val newPlayers = if (playerIsInRoom(userName)) players else players.::(userName)
     apply(
       id = id,
       name = name,
@@ -106,7 +107,7 @@ case class Room(id: String,
       status = status,
       currentWord = currentWord,
       scores = scores.updated(userName, score),
-      players = players.::(userName),
+      players = newPlayers,
       whoIsDrawingIdx = whoIsDrawingIdx,
       playersWhoGuessed = playersWhoGuessed
     )
@@ -162,5 +163,9 @@ case class Room(id: String,
 
   def playerHasGuessed(userName: String): Boolean = {
     playersWhoGuessed contains userName
+  }
+
+  def playerIsInRoom(userName: String): Boolean = {
+    players contains userName
   }
 }
