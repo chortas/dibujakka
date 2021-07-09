@@ -40,6 +40,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   implicit val scheduler: Scheduler = context.system.scheduler
   implicit val executionContext: ExecutionContext = context.executionContext
   implicit val timeout: Timeout = 10.seconds
+  val LOGGER = context.system.log
 
   import RoomActor._
 
@@ -68,6 +69,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
           Some(newDbActorRef)
         )
       case NextRound(replyTo) =>
+        LOGGER.info("About to update word")
         room.get.currentWord.foreach(
           word =>
             dbActorRef.get ! UpdateWordMetrics(
@@ -75,18 +77,22 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
               room.get.playersWhoGuessed.nonEmpty
           )
         )
+        LOGGER.info("Word updated")
         nextRoundScheduled.foreach(_.cancel())
         val futureWord: Future[Option[Word]] = dbActorRef.get ? GetWord
         val word: Option[Word] = Await.result(futureWord, timeout.duration)
+        LOGGER.info("New word from database")
 
         var newRoom = room.get.updateScores(room.get.getDrawer)
         var newNextRoundScheduled: Option[Cancellable] = None
         newRoom = newRoom.copy(currentWord = word)
 
         if (newRoom.hasFinishedAllRounds) {
+          LOGGER.info("All rounds have finished")
           newRoom = newRoom.copy(status = "finished")
           replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
         } else {
+          LOGGER.info("Round in progress")
           newRoom = newRoom.copy(
             currentRound = newRoom.currentRound + 1,
             whoIsDrawingIdx = newRoom.nextDrawingIndex,
@@ -98,6 +104,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
           )
           replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
         }
+        LOGGER.info("End next round")
         apply(Some(newRoom), newNextRoundScheduled, dbActorRef)
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id

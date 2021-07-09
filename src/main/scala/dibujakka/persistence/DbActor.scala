@@ -48,7 +48,7 @@ class DbActor(context: ActorContext[DibujakkaMessage])
           if (wasGuessed) word.timesGuessed + 1 else word.timesGuessed
         val timesPlayed = word.timesPlayed + 1
         val id = word.id
-        sql"update words_spa set timesGuessed = $timesGuessed, timesPlayed = $timesPlayed where id = $id".update.run
+        sql"update words_spa set times_guessed = $timesGuessed, times_played = $timesPlayed where id = $id".update.run
           .transact(transactor)
           .unsafeRunSync()
         this
