@@ -147,7 +147,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
         this
       case ChatMessage(replyTo, word, userName) =>
         var newRoom = room.get
-        if (!newRoom.isDrawing(userName)) {
+        if (!newRoom.isDrawing(userName) && newRoom.playerIsInRoom(userName)) {
           val currentWord = newRoom.currentWord
           if (word.equalsIgnoreCase(currentWord.get.text)) {
             if (!newRoom.playerHasGuessed(userName)) {
