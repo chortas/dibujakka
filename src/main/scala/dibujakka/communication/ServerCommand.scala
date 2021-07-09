@@ -29,8 +29,9 @@ case class DibujakkaServerCommand(room: Room) extends ServerCommand {
 
   override def toString(): String = {
     val scores = room.scores.toJson
+    val players = room.players.toJson
     val playersWhoGuessed = room.playersWhoGuessed.toJson
-    """{ "messageType": "room", "payload": { "status": "%s", "language": "%s", "scores": %s, "totalTime": "%d", "remainingTime": "%d", "totalRounds": "%d", "currentRound": "%d", "word": "%s", "whoIsDrawing": "%s", "playersWhoGuessed": %s} }"""
+    """{ "messageType": "room", "payload": { "status": "%s", "language": "%s", "scores": %s, "totalTime": "%d", "remainingTime": "%d", "totalRounds": "%d", "currentRound": "%d", "word": "%s", "whoIsDrawing": "%s", "playersWhoGuessed": %s, "players": %s} }"""
       .format(
         room.status,
         room.language,
@@ -44,7 +45,8 @@ case class DibujakkaServerCommand(room: Room) extends ServerCommand {
           case None => ""
         },
         room.getDrawer,
-        playersWhoGuessed
+        playersWhoGuessed,
+        players
       )
       .parseJson
       .toString()
