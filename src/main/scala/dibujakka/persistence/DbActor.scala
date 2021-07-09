@@ -27,8 +27,8 @@ class DbActor(context: ActorContext[DibujakkaMessage])
   val transactor: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",
     "jdbc:postgresql:dibujakka-pg",
-    "postgres",
-    "A1noko",
+    sys.env.getOrElse("DB_USER", "postgres"),
+    sys.env.getOrElse("DB_PASS", "A1noko"),
     Blocker.liftExecutionContext(ExecutionContexts.synchronous)
   )
 
