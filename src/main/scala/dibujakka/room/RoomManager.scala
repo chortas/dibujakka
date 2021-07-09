@@ -22,7 +22,9 @@ object RoomManager {
   def apply(): Behavior[DibujakkaMessage] =
     Behaviors.setup(context => new RoomManager(context, Map.empty))
 
-  def apply(rooms: Map[String, ActorRef[DibujakkaMessage]]): Behavior[DibujakkaMessage] =
+  def apply(
+    rooms: Map[String, ActorRef[DibujakkaMessage]]
+  ): Behavior[DibujakkaMessage] =
     Behaviors.setup(context => new RoomManager(context, rooms))
 }
 
@@ -35,7 +37,9 @@ class RoomManager(context: ActorContext[DibujakkaMessage],
 
   import RoomManager._
 
-  override def onMessage(message: DibujakkaMessage): Behavior[DibujakkaMessage] =
+  override def onMessage(
+    message: DibujakkaMessage
+  ): Behavior[DibujakkaMessage] =
     message match {
       case GetRooms(replyTo) =>
         implicit val timeout: Timeout = 10.seconds

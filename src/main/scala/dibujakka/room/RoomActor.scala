@@ -29,7 +29,14 @@ object RoomActor {
     dbActorRef: Option[ActorRef[DibujakkaMessage]]
   ): Behavior[DibujakkaMessage] =
     setup(
-      context => new RoomActor(context, room, nextRoundScheduled, endRoundScheduled, dbActorRef)
+      context =>
+        new RoomActor(
+          context,
+          room,
+          nextRoundScheduled,
+          endRoundScheduled,
+          dbActorRef
+      )
     )
 }
 
@@ -78,24 +85,27 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
             dbActorRef.get ! UpdateWordMetrics(
               word,
               room.get.playersWhoGuessed.nonEmpty
-            )
+          )
         )
         LOGGER.info("Word updated")
 
         endRoundScheduled.foreach(_.cancel())
 
         var newRoom = room.get.updateScores(room.get.getDrawer)
-        newRoom = newRoom.copy(
-          status = "interval"
-        )
+        newRoom = newRoom.copy(status = "interval")
 
         val newNextRoundScheduled = Some(
           context.system.scheduler
-            .scheduleOnce(5.seconds, () => context.self ! NextRound(replyTo))
+            .scheduleOnce(10.seconds, () => context.self ! NextRound(replyTo))
         )
 
         replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
-        apply(Some(newRoom), newNextRoundScheduled, endRoundScheduled, dbActorRef)
+        apply(
+          Some(newRoom),
+          newNextRoundScheduled,
+          endRoundScheduled,
+          dbActorRef
+        )
       case NextRound(replyTo) =>
         nextRoundScheduled.foreach(_.cancel())
 
@@ -120,12 +130,17 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
           )
           newEndRoundScheduled = Some(
             context.system.scheduler
-              .scheduleOnce(5.seconds, () => context.self ! EndRound(replyTo))
+              .scheduleOnce(60.seconds, () => context.self ! EndRound(replyTo))
           )
           replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
         }
         LOGGER.info("End next round")
-        apply(Some(newRoom), nextRoundScheduled, newEndRoundScheduled, dbActorRef)
+        apply(
+          Some(newRoom),
+          nextRoundScheduled,
+          newEndRoundScheduled,
+          dbActorRef
+        )
       case DrawMessage(replyTo, message) =>
         val roomId = room.get.id
         replyTo ! SendToClients(roomId, DrawServerCommand(message))
@@ -147,7 +162,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
           }
         }
         if (newRoom.allPlayersGuessed) {
-          context.self ! NextRound(replyTo)
+          context.self ! EndRound(replyTo)
         }
         apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
       case StartMessage(replyTo) =>
