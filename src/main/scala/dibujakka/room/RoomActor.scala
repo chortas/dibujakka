@@ -54,133 +54,198 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   import RoomActor._
 
   override def onMessage(msg: DibujakkaMessage): Behavior[DibujakkaMessage] =
+    room match {
+      case Some(room) => processMessageWithRoom(room, msg)
+      case None       => processMessageWithoutRoom(msg)
+    }
+
+  def processMessageWithoutRoom(msg: DibujakkaMessage) = msg match {
+    case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
+      processCreateRoom(id, name, totalRounds, maxPlayers, language)
+    case _ => this
+  }
+
+  private def processMessageWithRoom(room: Room, msg: DibujakkaMessage) =
     msg match {
       case GetRoom(replyTo) =>
-        replyTo ! room.get
-        this
-      case CreateRoom(id, name, totalRounds, maxPlayers, language) =>
-        val newDbActorRef: ActorRef[DibujakkaMessage] =
-          context.spawnAnonymous(DbActor())
-        apply(
-          Some(
-            Room(
-              id,
-              name,
-              totalRounds,
-              maxPlayers,
-              language,
-              0,
-              "waiting",
-              None,
-            )
-          ),
-          None,
-          None,
-          Some(newDbActorRef)
-        )
+        processGetRoom(replyTo, room)
       case EndRound(replyTo) =>
-        LOGGER.info("About to update word")
-        room.get.currentWord.foreach(
-          word =>
-            dbActorRef.get ! UpdateWordMetrics(
-              word,
-              room.get.playersWhoGuessed.nonEmpty
-          )
-        )
-        LOGGER.info("Word updated")
-
-        endRoundScheduled.foreach(_.cancel())
-
-        var newRoom = room.get.updateScores(room.get.getDrawer)
-        newRoom = newRoom.copy(status = "interval")
-
-        val newNextRoundScheduled = Some(
-          context.system.scheduler
-            .scheduleOnce(10.seconds, () => context.self ! NextRound(replyTo))
-        )
-
-        replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
-        apply(
-          Some(newRoom),
-          newNextRoundScheduled,
-          endRoundScheduled,
-          dbActorRef
-        )
+        processEndRound(replyTo, room)
       case NextRound(replyTo) =>
-        nextRoundScheduled.foreach(_.cancel())
-
-        val futureWord: Future[Option[Word]] = dbActorRef.get ? GetWord
-        val word: Option[Word] = Await.result(futureWord, timeout.duration)
-        LOGGER.info("New word from database")
-
-        var newEndRoundScheduled: Option[Cancellable] = None
-        var newRoom = room.get.copy(currentWord = word)
-
-        if (newRoom.hasFinishedAllRounds) {
-          LOGGER.info("All rounds have finished")
-          newRoom = newRoom.copy(status = "finished")
-          replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
-        } else {
-          LOGGER.info("Round in progress")
-          newRoom = newRoom.copy(
-            status = "in progress",
-            currentRound = newRoom.currentRound + 1,
-            whoIsDrawingIdx = newRoom.nextDrawingIndex,
-            playersWhoGuessed = List.empty
-          )
-          newEndRoundScheduled = Some(
-            context.system.scheduler
-              .scheduleOnce(60.seconds, () => context.self ! EndRound(replyTo))
-          )
-          replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
-        }
-        LOGGER.info("End next round")
-        apply(
-          Some(newRoom),
-          nextRoundScheduled,
-          newEndRoundScheduled,
-          dbActorRef
-        )
+        processNextRound(replyTo, room)
       case DrawMessage(replyTo, message) =>
-        val roomId = room.get.id
-        replyTo ! SendToClients(roomId, DrawServerCommand(message))
-        this
+        processDrawMessage(replyTo, message, room)
       case ChatMessage(replyTo, word, userName) =>
-        var newRoom = room.get
-        if (!newRoom.isDrawing(userName) && newRoom.playerIsInRoom(userName)) {
-          val currentWord = newRoom.currentWord
-          if (word.equalsIgnoreCase(currentWord.get.text)) {
-            if (!newRoom.playerHasGuessed(userName)) {
-              newRoom = newRoom.updateScores(userName)
-              replyTo ! SendToClients(
-                newRoom.id,
-                DibujakkaServerCommand(newRoom)
-              )
-            }
-          } else {
-            replyTo ! SendToClients(newRoom.id, ChatServerCommand(word))
-          }
-        }
-        if (newRoom.allPlayersGuessed) {
-          context.self ! EndRound(replyTo)
-        }
-        apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
+        processChatMessage(replyTo, word, userName, room)
       case StartMessage(replyTo) =>
-        var newRoom = room.get
-        if (room.get.canStart) {
-          context.self ! NextRound(replyTo)
-          newRoom = newRoom.copy(
-            currentRound = 0,
-            status = "in progress",
-            whoIsDrawingIdx = between(0, room.get.players.size),
-            playersWhoGuessed = List.empty
-          )
-        }
-        apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
+        processStartMessage(replyTo, room)
       case JoinMessage(replyTo, userName) =>
-        val newRoom = room.get.addPlayer(userName)
-        val roomId = newRoom.id
-        replyTo ! SendToClients(roomId, DibujakkaServerCommand(newRoom))
-        apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
+        processJoinMessage(replyTo, userName, room)
+      case _ => this
     }
+
+  private def processGetRoom(replyTo: ActorRef[Room], room: Room) = {
+    replyTo ! room
+    this
+  }
+
+  private def processCreateRoom(id: String,
+                                name: String,
+                                totalRounds: Int,
+                                maxPlayers: Int,
+                                language: String) = {
+    val newDbActorRef: ActorRef[DibujakkaMessage] =
+      context.spawnAnonymous(DbActor())
+    apply(
+      Some(
+        Room(id, name, totalRounds, maxPlayers, language, 0, "waiting", None)
+      ),
+      None,
+      None,
+      Some(newDbActorRef)
+    )
+  }
+
+  private def processEndRound(replyTo: ActorRef[SendToClients], room: Room) = {
+    updateMetricsForWord(room)
+
+    endRoundScheduled.foreach(_.cancel())
+
+    var newRoom = room.updateScores(room.getDrawer)
+    newRoom = newRoom.copy(status = "interval")
+
+    val newNextRoundScheduled = scheduleNextRound(replyTo)
+
+    replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
+    apply(Some(newRoom), newNextRoundScheduled, endRoundScheduled, dbActorRef)
+  }
+
+  private def processNextRound(replyTo: ActorRef[SendToClients],
+                               room: Room): Behavior[DibujakkaMessage] = {
+    nextRoundScheduled.foreach(_.cancel())
+    var newRoom = room
+    var newEndRoundScheduled: Option[Cancellable] = None
+
+    dbActorRef.foreach(dbActorRef => {
+      newRoom = getWordAndUpdateRoom(dbActorRef, room)
+
+      if (newRoom.hasFinishedAllRounds) {
+        newRoom = newRoom.copy(status = "finished")
+      } else {
+        val result = scheduleEndRound(replyTo, newRoom)
+        newRoom = result._1
+        newEndRoundScheduled = result._2
+      }
+      replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
+    })
+    apply(Some(newRoom), nextRoundScheduled, newEndRoundScheduled, dbActorRef)
+  }
+
+  private def processDrawMessage(replyTo: ActorRef[SendToClients],
+                                 message: String,
+                                 room: Room) = {
+    val roomId = room.id
+    replyTo ! SendToClients(roomId, DrawServerCommand(message))
+    this
+  }
+
+  private def processChatMessage(replyTo: ActorRef[SendToClients],
+                                 word: String,
+                                 userName: String,
+                                 room: Room) = {
+    var newRoom = room
+    if (!newRoom.isDrawing(userName) && newRoom.playerIsInRoom(userName)) {
+      val currentWord = newRoom.currentWord
+      currentWord.foreach(currentWord => {
+        newRoom = sendChosenWord(word, currentWord, newRoom, userName, replyTo)
+      })
+    }
+    if (newRoom.allPlayersGuessed) {
+      context.self ! EndRound(replyTo)
+    }
+    apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
+  }
+
+  private def processStartMessage(replyTo: ActorRef[SendToClients],
+                                  room: Room): Behavior[DibujakkaMessage] = {
+    var newRoom = room
+    if (room.canStart) {
+      context.self ! NextRound(replyTo)
+      newRoom = newRoom.copy(
+        currentRound = 0,
+        status = "in progress",
+        whoIsDrawingIdx = between(0, room.players.size),
+        playersWhoGuessed = List.empty
+      )
+    }
+    apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
+  }
+
+  private def processJoinMessage(replyTo: ActorRef[SendToClients],
+                                 userName: String,
+                                 room: Room) = {
+    val newRoom = room.addPlayer(userName)
+    val roomId = newRoom.id
+    replyTo ! SendToClients(roomId, DibujakkaServerCommand(newRoom))
+    apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
+  }
+
+  private def sendChosenWord(word: String,
+                             currentWord: Word,
+                             room: Room,
+                             userName: String,
+                             replyTo: ActorRef[SendToClients]) = {
+    var newRoom = room
+    if (word.equalsIgnoreCase(currentWord.text) && !room.playerHasGuessed(
+          userName
+        )) {
+      newRoom = room.updateScores(userName)
+      replyTo ! SendToClients(room.id, DibujakkaServerCommand(room))
+    } else {
+      replyTo ! SendToClients(room.id, ChatServerCommand(word))
+    }
+    newRoom
+  }
+
+  private def scheduleNextRound(replyTo: ActorRef[SendToClients]) = {
+    val newNextRoundScheduled = Some(
+      context.system.scheduler
+        .scheduleOnce(10.seconds, () => context.self ! NextRound(replyTo))
+    )
+    newNextRoundScheduled
+  }
+
+  private def updateMetricsForWord(room: Room) = {
+    room.currentWord.foreach(
+      word =>
+        dbActorRef.foreach(
+          dbActorRef =>
+            dbActorRef ! UpdateWordMetrics(
+              word,
+              room.playersWhoGuessed.nonEmpty
+          )
+      )
+    )
+  }
+
+  private def getWordAndUpdateRoom(dbActorRef: ActorRef[DibujakkaMessage],
+                                   newRoom: Room) = {
+    val futureWord: Future[Option[Word]] = dbActorRef ? GetWord
+    val word: Option[Word] = Await.result(futureWord, timeout.duration)
+    newRoom.copy(currentWord = word)
+  }
+
+  private def scheduleEndRound(replyTo: ActorRef[SendToClients], room: Room) = {
+    val newRoom = room.copy(
+      status = "in progress",
+      currentRound = room.currentRound + 1,
+      whoIsDrawingIdx = room.nextDrawingIndex,
+      playersWhoGuessed = List.empty
+    )
+    val newEndRoundScheduled = Some(
+      context.system.scheduler
+        .scheduleOnce(15.seconds, () => context.self ! EndRound(replyTo))
+    )
+    (newRoom, newEndRoundScheduled)
+  }
 }
