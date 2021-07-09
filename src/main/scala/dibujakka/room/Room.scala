@@ -1,7 +1,16 @@
 package dibujakka.room
 
 import dibujakka.persistence.Word
-import spray.json.{DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
+import spray.json.{
+  DefaultJsonProtocol,
+  JsArray,
+  JsNumber,
+  JsObject,
+  JsString,
+  JsValue,
+  RootJsonFormat,
+  deserializationError
+}
 
 object RoomJsonProtocol extends DefaultJsonProtocol {
   implicit object RoomJsonFormat extends RootJsonFormat[Room] {
@@ -96,7 +105,8 @@ case class Room(id: String,
   // NTH: use currying. See https://www.baeldung.com/scala/currying
   def addPlayer(userName: String): Room = {
     val score = scores.getOrElse(userName, 0)
-    val newPlayers = if (playerIsInRoom(userName)) players else players.::(userName)
+    val newPlayers =
+      if (playerIsInRoom(userName)) players else players.::(userName)
     apply(
       id = id,
       name = name,
@@ -121,17 +131,17 @@ case class Room(id: String,
     players(whoIsDrawingIdx)
   }
 
-  def isDrawing(name: String): Boolean = {
-    name.equals(getDrawer)
+  def isDrawing(userName: String): Boolean = {
+    userName.equals(getDrawer)
   }
 
   def nextDrawingIndex: Int = {
     (whoIsDrawingIdx + 1) % players.size
   }
 
-  def updateScores(name: String): Room = {
-    var newScore = scores.getOrElse(name, 0)
-    if (isDrawing(name)) {
+  def updateScores(userName: String): Room = {
+    var newScore = scores.getOrElse(userName, 0)
+    if (isDrawing(userName)) {
       newScore += playersWhoGuessed.size * 2
     } else {
       // give more points to the player who guesses earlier
@@ -146,10 +156,10 @@ case class Room(id: String,
       currentRound = currentRound,
       status = status,
       currentWord = currentWord,
-      scores = scores.updated(name, newScore),
+      scores = scores.updated(userName, newScore),
       players = players,
       whoIsDrawingIdx = whoIsDrawingIdx,
-      playersWhoGuessed = playersWhoGuessed.::(name)
+      playersWhoGuessed = playersWhoGuessed.::(userName)
     )
   }
 
