@@ -94,8 +94,8 @@ case class Room(id: String,
   import Room._
 
   // NTH: use currying. See https://www.baeldung.com/scala/currying
-  def addPlayer(name: String): Room = {
-    val score = scores.getOrElse(name, 0)
+  def addPlayer(userName: String): Room = {
+    val score = scores.getOrElse(userName, 0)
     apply(
       id = id,
       name = name,
@@ -105,8 +105,8 @@ case class Room(id: String,
       currentRound = currentRound,
       status = status,
       currentWord = currentWord,
-      scores = scores.updated(name, score),
-      players = players.::(name),
+      scores = scores.updated(userName, score),
+      players = players.::(userName),
       whoIsDrawingIdx = whoIsDrawingIdx,
       playersWhoGuessed = playersWhoGuessed
     )
