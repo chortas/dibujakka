@@ -2,9 +2,12 @@ package dibujakka.persistence
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors._
-import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext}
 import cats.effect._
-import dibujakka.messages.DibujakkaMessages.{DibujakkaMessage, GetWord, UpdateWordMetrics}
+import dibujakka.messages.DibujakkaMessages.{
+  DibujakkaMessage,
+  GetWord,
+  UpdateWordMetrics
+}
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor.Aux
@@ -25,19 +28,20 @@ object DbActor {
     dbActor
 
   private def dbActor: Behavior[DibujakkaMessage] =
-    receive({(_, message) => message match {
+    receive({ (_, message) =>
+      message match {
         case GetWord(replyTo) =>
           val word: Option[Word] =
-          sql"select id, word, difficulty, times_played, times_guessed from words_spa order by random() limit 1"
-            .query[Word]
-            .option
-            .transact(transactor)
-            .unsafeRunSync()
+            sql"select id, word, difficulty, times_played, times_guessed from words_spa order by random() limit 1"
+              .query[Word]
+              .option
+              .transact(transactor)
+              .unsafeRunSync()
           replyTo ! word
           same
         case UpdateWordMetrics(word, wasGuessed) =>
           val timesGuessed =
-          if (wasGuessed) word.timesGuessed + 1 else word.timesGuessed
+            if (wasGuessed) word.timesGuessed + 1 else word.timesGuessed
           val timesPlayed = word.timesPlayed + 1
           val id = word.id
           sql"update words_spa set times_guessed = $timesGuessed, times_played = $timesPlayed where id = $id".update.run
@@ -46,5 +50,6 @@ object DbActor {
           same
         case _ =>
           same
-      }})
+      }
+    })
 }
