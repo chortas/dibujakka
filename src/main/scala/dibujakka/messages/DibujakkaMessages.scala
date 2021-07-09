@@ -11,6 +11,8 @@ object DibujakkaMessages {
 
   case class NextRound(replyTo: ActorRef[SendToClients]) extends DibujakkaMessage
 
+  case class EndRound(replyTo: ActorRef[SendToClients]) extends DibujakkaMessage
+
   case class AddPlayer() extends DibujakkaMessage
 
   case class GetRoom(replyTo: ActorRef[Room]) extends DibujakkaMessage

@@ -141,11 +141,13 @@ case class Room(id: String,
 
   def updateScores(userName: String): Room = {
     var newScore = scores.getOrElse(userName, 0)
+    var newPlayersWhoGuessed = playersWhoGuessed
     if (isDrawing(userName)) {
       newScore += playersWhoGuessed.size * 2
     } else {
       // give more points to the player who guesses earlier
       newScore += players.size - playersWhoGuessed.size
+      newPlayersWhoGuessed = newPlayersWhoGuessed.::(userName)
     }
     apply(
       id = id,
@@ -159,7 +161,7 @@ case class Room(id: String,
       scores = scores.updated(userName, newScore),
       players = players,
       whoIsDrawingIdx = whoIsDrawingIdx,
-      playersWhoGuessed = playersWhoGuessed.::(userName)
+      playersWhoGuessed = newPlayersWhoGuessed
     )
   }
 

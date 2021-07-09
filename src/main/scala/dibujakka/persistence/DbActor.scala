@@ -28,7 +28,7 @@ class DbActor(context: ActorContext[DibujakkaMessage])
     "org.postgresql.Driver",
     "jdbc:postgresql:dibujakka-pg",
     sys.env.getOrElse("DB_USER", "postgres"),
-    sys.env.getOrElse("DB_PASS", "A1noko"),
+    sys.env.getOrElse("DB_PASS", ""),
     Blocker.liftExecutionContext(ExecutionContexts.synchronous)
   )
 
