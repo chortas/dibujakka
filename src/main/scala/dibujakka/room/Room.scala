@@ -50,7 +50,8 @@ object RoomJsonProtocol extends DefaultJsonProtocol {
           scores = Map.empty,
           players = List.empty,
           whoIsDrawingIdx = 0,
-          playersWhoGuessed = List.empty
+          playersWhoGuessed = List.empty,
+          wordsIdsPlayed = List.empty
         )
       case _ => deserializationError("Room expected")
     }
@@ -69,7 +70,8 @@ object Room {
             scores: Map[String, Int] = Map.empty,
             players: List[String] = List.empty,
             whoIsDrawingIdx: Int = 0,
-            playersWhoGuessed: List[String] = List.empty) = {
+            playersWhoGuessed: List[String] = List.empty,
+            wordsIdsPlayed: List[Int] = List.empty) = {
     new Room(
       id,
       name,
@@ -82,7 +84,8 @@ object Room {
       scores,
       players,
       whoIsDrawingIdx,
-      playersWhoGuessed
+      playersWhoGuessed,
+      wordsIdsPlayed
     )
   }
 }
@@ -98,9 +101,46 @@ case class Room(id: String,
                 scores: Map[String, Int],
                 players: List[String],
                 whoIsDrawingIdx: Int,
-                playersWhoGuessed: List[String]) {
-
+                playersWhoGuessed: List[String],
+                wordsIdsPlayed: List[Int]) {
   import Room._
+
+  def addWord(wordToAdd: Option[Word]): Room = {
+    wordToAdd match {
+      case Some(word) =>
+        apply(
+          id = id,
+          name = name,
+          totalRounds = totalRounds,
+          maxPlayers = maxPlayers,
+          language = language,
+          currentRound = currentRound,
+          status = status,
+          currentWord = Some(word),
+          scores = scores,
+          players = players,
+          whoIsDrawingIdx = whoIsDrawingIdx,
+          playersWhoGuessed = playersWhoGuessed,
+          wordsIdsPlayed = wordsIdsPlayed.::(word.id)
+        )
+      case None =>
+        apply(
+          id = id,
+          name = name,
+          totalRounds = totalRounds,
+          maxPlayers = maxPlayers,
+          language = language,
+          currentRound = currentRound,
+          status = status,
+          currentWord = currentWord,
+          scores = scores,
+          players = players,
+          whoIsDrawingIdx = whoIsDrawingIdx,
+          playersWhoGuessed = playersWhoGuessed,
+          wordsIdsPlayed = wordsIdsPlayed
+        )
+    }
+  }
 
   // NTH: use currying. See https://www.baeldung.com/scala/currying
   def addPlayer(userName: String): Room = {
@@ -119,7 +159,8 @@ case class Room(id: String,
       scores = scores.updated(userName, score),
       players = newPlayers,
       whoIsDrawingIdx = whoIsDrawingIdx,
-      playersWhoGuessed = playersWhoGuessed
+      playersWhoGuessed = playersWhoGuessed,
+      wordsIdsPlayed = wordsIdsPlayed
     )
   }
 
@@ -161,7 +202,8 @@ case class Room(id: String,
       scores = scores.updated(userName, newScore),
       players = players,
       whoIsDrawingIdx = whoIsDrawingIdx,
-      playersWhoGuessed = newPlayersWhoGuessed
+      playersWhoGuessed = newPlayersWhoGuessed,
+      wordsIdsPlayed = wordsIdsPlayed
     )
   }
 
@@ -174,10 +216,14 @@ case class Room(id: String,
   }
 
   def playerHasGuessed(userName: String): Boolean = {
-    playersWhoGuessed contains userName
+    playersWhoGuessed.contains(userName)
   }
 
   def playerIsInRoom(userName: String): Boolean = {
-    players contains userName
+    players.contains(userName)
+  }
+
+  def hasBeenPlayed(word: Option[Word]): Boolean = {
+    word.isDefined && wordsIdsPlayed.contains(word.get.id)
   }
 }

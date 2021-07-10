@@ -229,10 +229,13 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   }
 
   private def getWordAndUpdateRoom(dbActorRef: ActorRef[DibujakkaMessage],
-                                   newRoom: Room) = {
-    val futureWord: Future[Option[Word]] = dbActorRef ? GetWord
-    val word: Option[Word] = Await.result(futureWord, timeout.duration)
-    newRoom.copy(currentWord = word)
+                                   room: Room) = {
+    var word: Option[Word] = None
+    do {
+      val futureWord: Future[Option[Word]] = dbActorRef ? GetWord
+      word = Await.result(futureWord, timeout.duration)
+    } while (room.hasBeenPlayed(word))
+    room.addWord(word)
   }
 
   private def scheduleEndRound(replyTo: ActorRef[SendToClients], room: Room) = {
