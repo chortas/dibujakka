@@ -50,6 +50,8 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   implicit val executionContext: ExecutionContext = context.executionContext
   implicit val timeout: Timeout = 10.seconds
   val LOGGER = context.system.log
+  val ROUND_TIME = 15
+  val INTERVAL_TIME = 5
 
   import RoomActor._
 
@@ -210,7 +212,10 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   private def scheduleNextRound(replyTo: ActorRef[SendToClients]) = {
     val newNextRoundScheduled = Some(
       context.system.scheduler
-        .scheduleOnce(10.seconds, () => context.self ! NextRound(replyTo))
+        .scheduleOnce(
+          ROUND_TIME.seconds,
+          () => context.self ! NextRound(replyTo)
+        )
     )
     newNextRoundScheduled
   }
@@ -232,7 +237,9 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
                                    room: Room) = {
     var word: Option[Word] = None
     do {
-      val futureWord: Future[Option[Word]] = dbActorRef ? GetWord
+      val difficulty: Int = (room.currentRound / 3) + 1
+      val futureWord: Future[Option[Word]] =
+        dbActorRef.ask(actorRef => GetWordEqualDifficulty(actorRef, difficulty))
       word = Await.result(futureWord, timeout.duration)
     } while (room.hasBeenPlayed(word))
     room.addWord(word)
@@ -247,7 +254,10 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
     )
     val newEndRoundScheduled = Some(
       context.system.scheduler
-        .scheduleOnce(15.seconds, () => context.self ! EndRound(replyTo))
+        .scheduleOnce(
+          INTERVAL_TIME.seconds,
+          () => context.self ! EndRound(replyTo)
+        )
     )
     (newRoom, newEndRoundScheduled)
   }
