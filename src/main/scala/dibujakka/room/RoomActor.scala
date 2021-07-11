@@ -50,8 +50,8 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   implicit val executionContext: ExecutionContext = context.executionContext
   implicit val timeout: Timeout = 10.seconds
   val LOGGER = context.system.log
-  val ROUND_TIME = 15
-  val INTERVAL_TIME = 5
+  val ROUND_TIME = 60
+  val INTERVAL_TIME = 10
 
   import RoomActor._
 
