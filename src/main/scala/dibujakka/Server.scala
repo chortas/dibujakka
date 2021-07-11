@@ -11,6 +11,7 @@ import dibujakka.services.{PlayerService, RoomService}
 
 import scala.concurrent.ExecutionContext
 import scala.io.StdIn
+import scala.util.{Failure, Success}
 
 object Server extends PlayerService with RoomService {
   implicit val system: ActorSystem[DibujakkaMessage] =
@@ -24,11 +25,11 @@ object Server extends PlayerService with RoomService {
       roomsRoute ~ playersRoute
     }
 
-    val bindingFuture = Http().newServerAt("0.0.0.0", scala.util.Properties.envOrElse("PORT", "8080").toInt).bind(route)
-    println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-    StdIn.readLine() // let it run until user presses return
-    bindingFuture
-      .flatMap(_.unbind()) // trigger unbinding from the port
-      .onComplete(_ => system.terminate()) // and shutdown when done
+    val bindingFuture = Http().newServerAt("0.0.0.0", 9000).bind(route)
+    println(s"Server online at http://localhost:9000/\nPress RETURN to stop...")
+    bindingFuture.onComplete {
+      case Success(_) => println("Success!")
+      case Failure(error) => println(s"Failed: ${error.getMessage}")
+    }
   }
 }
