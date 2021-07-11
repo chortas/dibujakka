@@ -199,13 +199,13 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
                              userName: String,
                              replyTo: ActorRef[SendToClients]) = {
     var newRoom = room
-    if (word.equalsIgnoreCase(currentWord.text) && !room.playerHasGuessed(
+    if (word.equalsIgnoreCase(currentWord.text) && !newRoom.playerHasGuessed(
           userName
         )) {
-      newRoom = room.updateScores(userName)
-      replyTo ! SendToClients(room.id, DibujakkaServerCommand(room))
+      newRoom = newRoom.updateScores(userName)
+      replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
     } else {
-      replyTo ! SendToClients(room.id, ChatServerCommand(word))
+      replyTo ! SendToClients(newRoom.id, ChatServerCommand(word))
     }
     newRoom
   }

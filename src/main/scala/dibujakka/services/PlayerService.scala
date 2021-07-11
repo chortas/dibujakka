@@ -77,7 +77,7 @@ trait PlayerService {
         Nil
     })
     val outbound: Source[Message, SourceQueueWithComplete[Message]] =
-      Source.queue[Message](16, OverflowStrategy.fail)
+      Source.queue[Message](1024, OverflowStrategy.fail)
 
     Flow.fromSinkAndSourceMat(inbound, outbound)((_, outboundMat) => {
       clientConnections = clientConnections
