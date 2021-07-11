@@ -175,7 +175,8 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
         currentRound = 0,
         status = "in progress",
         whoIsDrawingIdx = between(0, room.players.size),
-        playersWhoGuessed = List.empty
+        playersWhoGuessed = List.empty,
+        scores = newRoom.players.map((_, 0)).toMap
       )
     }
     apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
