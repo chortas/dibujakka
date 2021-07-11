@@ -214,7 +214,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
     val newNextRoundScheduled = Some(
       context.system.scheduler
         .scheduleOnce(
-          ROUND_TIME.seconds,
+          INTERVAL_TIME.seconds,
           () => context.self ! NextRound(replyTo)
         )
     )
@@ -256,7 +256,7 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
     val newEndRoundScheduled = Some(
       context.system.scheduler
         .scheduleOnce(
-          INTERVAL_TIME.seconds,
+          ROUND_TIME.seconds,
           () => context.self ! EndRound(replyTo)
         )
     )
