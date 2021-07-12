@@ -50,6 +50,8 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   implicit val executionContext: ExecutionContext = context.executionContext
   implicit val timeout: Timeout = 10.seconds
   val LOGGER = context.system.log
+  val ROUND_TIME = 60
+  val INTERVAL_TIME = 10
 
   import RoomActor._
 
@@ -175,7 +177,8 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
         currentRound = 0,
         status = "in progress",
         whoIsDrawingIdx = between(0, room.players.size),
-        playersWhoGuessed = List.empty
+        playersWhoGuessed = List.empty,
+        scores = newRoom.players.map((_, 0)).toMap
       )
     }
     apply(Some(newRoom), nextRoundScheduled, endRoundScheduled, dbActorRef)
@@ -196,13 +199,13 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
                              userName: String,
                              replyTo: ActorRef[SendToClients]) = {
     var newRoom = room
-    if (word.equalsIgnoreCase(currentWord.text) && !room.playerHasGuessed(
+    if (word.equalsIgnoreCase(currentWord.text) && !newRoom.playerHasGuessed(
           userName
         )) {
-      newRoom = room.updateScores(userName)
-      replyTo ! SendToClients(room.id, DibujakkaServerCommand(room))
+      newRoom = newRoom.updateScores(userName)
+      replyTo ! SendToClients(newRoom.id, DibujakkaServerCommand(newRoom))
     } else {
-      replyTo ! SendToClients(room.id, ChatServerCommand(word))
+      replyTo ! SendToClients(newRoom.id, ChatServerCommand(word))
     }
     newRoom
   }
@@ -210,7 +213,10 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   private def scheduleNextRound(replyTo: ActorRef[SendToClients]) = {
     val newNextRoundScheduled = Some(
       context.system.scheduler
-        .scheduleOnce(10.seconds, () => context.self ! NextRound(replyTo))
+        .scheduleOnce(
+          INTERVAL_TIME.seconds,
+          () => context.self ! NextRound(replyTo)
+        )
     )
     newNextRoundScheduled
   }
@@ -229,10 +235,15 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
   }
 
   private def getWordAndUpdateRoom(dbActorRef: ActorRef[DibujakkaMessage],
-                                   newRoom: Room) = {
-    val futureWord: Future[Option[Word]] = dbActorRef ? GetWord
-    val word: Option[Word] = Await.result(futureWord, timeout.duration)
-    newRoom.copy(currentWord = word)
+                                   room: Room) = {
+    var word: Option[Word] = None
+    do {
+      val difficulty: Int = (room.currentRound / 3) + 1
+      val futureWord: Future[Option[Word]] =
+        dbActorRef.ask(actorRef => GetWordEqualDifficulty(actorRef, difficulty))
+      word = Await.result(futureWord, timeout.duration)
+    } while (room.hasBeenPlayed(word))
+    room.addWord(word)
   }
 
   private def scheduleEndRound(replyTo: ActorRef[SendToClients], room: Room) = {
@@ -244,7 +255,10 @@ class RoomActor(context: ActorContext[DibujakkaMessage],
     )
     val newEndRoundScheduled = Some(
       context.system.scheduler
-        .scheduleOnce(15.seconds, () => context.self ! EndRound(replyTo))
+        .scheduleOnce(
+          ROUND_TIME.seconds,
+          () => context.self ! EndRound(replyTo)
+        )
     )
     (newRoom, newEndRoundScheduled)
   }

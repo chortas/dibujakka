@@ -9,7 +9,8 @@ import dibujakka.room.RoomManager.Rooms
 object DibujakkaMessages {
   trait DibujakkaMessage
 
-  case class NextRound(replyTo: ActorRef[SendToClients]) extends DibujakkaMessage
+  case class NextRound(replyTo: ActorRef[SendToClients])
+      extends DibujakkaMessage
 
   case class EndRound(replyTo: ActorRef[SendToClients]) extends DibujakkaMessage
 
@@ -40,18 +41,18 @@ object DibujakkaMessages {
                          userName: String)
       extends DibujakkaMessage
 
-  case class StartMessage(replyTo: ActorRef[SendToClients]) extends DibujakkaMessage
+  case class StartMessage(replyTo: ActorRef[SendToClients])
+      extends DibujakkaMessage
 
   case class JoinMessage(replyTo: ActorRef[SendToClients], name: String)
       extends DibujakkaMessage
 
-  // TODO NTH: Get only words that haven't been played
   case class GetWord(replyTo: ActorRef[Option[Word]]) extends DibujakkaMessage
 
-  case class UpdateWordMetrics(word: Word, wasGuessed: Boolean) extends DibujakkaMessage
+  case class UpdateWordMetrics(word: Word, wasGuessed: Boolean)
+      extends DibujakkaMessage
 
-  // TODO NTH
-  // case class GetWordE(replyTo: ActorRef[?], difficulty: Int) extends DbMessage
-  // case class GetWordLE(replyTo: ActorRef[?], difficulty: Int) extends DbMessage
-  // case class GetWordGE(replyTo: ActorRef[?], difficulty: Int) extends DbMessage
+  case class GetWordEqualDifficulty(replyTo: ActorRef[Option[Word]],
+                                    difficulty: Int)
+      extends DibujakkaMessage
 }

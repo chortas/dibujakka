@@ -3,11 +3,7 @@ package dibujakka.persistence
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors._
 import cats.effect._
-import dibujakka.messages.DibujakkaMessages.{
-  DibujakkaMessage,
-  GetWord,
-  UpdateWordMetrics
-}
+import dibujakka.messages.DibujakkaMessages._
 import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor.Aux
@@ -33,6 +29,15 @@ object DbActor {
         case GetWord(replyTo) =>
           val word: Option[Word] =
             sql"select id, word, difficulty, times_played, times_guessed from words_spa order by random() limit 1"
+              .query[Word]
+              .option
+              .transact(transactor)
+              .unsafeRunSync()
+          replyTo ! word
+          same
+        case GetWordEqualDifficulty(replyTo, difficulty) =>
+          val word: Option[Word] =
+            sql"select id, word, difficulty, times_played, times_guessed from words_spa where difficulty = $difficulty order by random() limit 1"
               .query[Word]
               .option
               .transact(transactor)
