@@ -25,8 +25,8 @@ object Server extends PlayerService with RoomService {
       roomsRoute ~ playersRoute
     }
 
-    val bindingFuture = Http().newServerAt("0.0.0.0", 9000).bind(route)
-    println(s"Server online at http://localhost:9000/\nPress RETURN to stop...")
+    val bindingFuture = Http().newServerAt("0.0.0.0", sys.env.getOrElse("PORT", "9000").toInt).bind(route)
+    println(s"Server online")
     bindingFuture.onComplete {
       case Success(_) => println("Success!")
       case Failure(error) => println(s"Failed: ${error.getMessage}")

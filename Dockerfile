@@ -11,11 +11,10 @@ RUN echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/ap
 WORKDIR /mydir
 COPY . .
 
-ENV PORT=$PORT
-ENV DB_NAME=$DB_NAME
-EXPOSE $PORT
+EXPOSE ${PORT}
 
 RUN apt-get install -y postgresql
 RUN sbt compile
+RUN echo ${DATABASE_URL}
 
-CMD sh wait-for-postgres.sh $DATABASE_URL sbt run
+CMD sh wait-for-postgres.sh ${DATABASE_URL} sbt run
