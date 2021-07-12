@@ -7,6 +7,6 @@ build:
     web: Dockerfile
 
 release:
-    image: worker
+    image: web
     command:
       - ./wait-for-postgres.sh
