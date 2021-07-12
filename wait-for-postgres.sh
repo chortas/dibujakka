@@ -3,7 +3,7 @@
 
 set -e
   
-host="$1"
+host="$DATABASE_URL"
 shift
 cmd="$@"
   
