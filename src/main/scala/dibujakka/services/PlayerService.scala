@@ -70,14 +70,13 @@ trait PlayerService {
               JoinClientCommand(newWebSocketMessage.payload.toString)
             )
         }
-        println("TextMessage received in room:", roomId)
       case bm: BinaryMessage =>
         // ignore binary messages but drain content to avoid the stream being clogged
         bm.dataStream.runWith(Sink.ignore)
         Nil
     })
     val outbound: Source[Message, SourceQueueWithComplete[Message]] =
-      Source.queue[Message](1024, OverflowStrategy.fail)
+      Source.queue[Message](5012, OverflowStrategy.fail)
 
     Flow.fromSinkAndSourceMat(inbound, outbound)((_, outboundMat) => {
       clientConnections = clientConnections

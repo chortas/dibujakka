@@ -4,9 +4,11 @@ import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.settings.ServerSettings
+import akka.util.ByteString
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
-import dibujakka.room.RoomManager
 import dibujakka.messages.DibujakkaMessages.DibujakkaMessage
+import dibujakka.room.RoomManager
 import dibujakka.services.{PlayerService, RoomService}
 
 import scala.concurrent.ExecutionContext
@@ -24,7 +26,12 @@ object Server extends PlayerService with RoomService {
       roomsRoute ~ playersRoute
     }
 
-    val bindingFuture = Http().newServerAt("0.0.0.0", scala.util.Properties.envOrElse("PORT", "8080").toInt).bind(route)
+    val bindingFuture = Http()
+      .newServerAt(
+        "0.0.0.0",
+        scala.util.Properties.envOrElse("PORT", "8080").toInt
+      )
+      .bind(route)
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return
     bindingFuture
