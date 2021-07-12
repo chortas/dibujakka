@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: psql-container
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - my-network
+
+  sbt:
+    build: .
+    container_name: sbt-service
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@psql-container:5432/postgres
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_NAME=psql-container:5432/postgres
+      - PORT=9000
+    ports:
+      - "9000:9000"
+    depends_on:
+      - postgres
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge

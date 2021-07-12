@@ -14,9 +14,9 @@ object DbActor {
 
   val transactor: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",
-    "jdbc:postgresql:dibujakka-pg",
+    "jdbc:postgresql:" + sys.env.getOrElse("DB_NAME", "postgres"),
     sys.env.getOrElse("DB_USER", "postgres"),
-    sys.env.getOrElse("DB_PASS", ""),
+    sys.env.getOrElse("DB_PASS", "postgres"),
     Blocker.liftExecutionContext(ExecutionContexts.synchronous)
   )
 
