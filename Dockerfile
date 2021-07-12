@@ -13,9 +13,9 @@ COPY . .
 
 EXPOSE ${PORT}
 
-RUN apt-get install -y postgresql
+#RUN apt-get install -y postgresql
 #RUN sbt compile
 #RUN echo ${DATABASE_URL}
 
-CMD sh wait-for-postgres.sh ${DATABASE_URL} sbt run
-#CMD sbt run
+#CMD sh wait-for-postgres.sh ${DATABASE_URL} sbt run
+CMD sbt run
